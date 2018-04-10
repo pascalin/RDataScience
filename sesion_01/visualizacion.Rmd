@@ -1,0 +1,100 @@
+# Un poco de visualizaci??n, la m??nima para realmente disfrutar R
+
+## Usaremos una biblioteca de R
+
+```{r setup}
+library(tidyverse)
+```
+
+
+```{r eval = FALSE}
+install.packages("tidyverse")
+library(tidyverse)
+```
+
+Las bibliotecas de R frecuentemente incluyen sus propios datasets:
+
+```{r}
+mpg
+```
+
+
+### ggplot
+
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy))
+```plot(mpg$displ, mpg$hwy)
+
+
+### Una platilla para graficar
+
+```{r eval = FALSE}
+ggplot(data = <DATA>) + 
+  <GEOM_FUNCTION>(mapping = aes(<MAPPINGS>))
+```
+
+### Ejercicios
+
+1.  Ejecuta `ggplot(data = mpg)`. ??Qu?? ves?
+
+1.  ??Qu?? forma tiene `mpg`? ??Qu?? tipo de objeto es?
+
+1.  ??Qu?? cosas contiene la columna 'drv'?
+     
+1.  Grafica `hwy` vs `cyl`
+
+1.  ??Qu?? pasa si graficas `class` vs `drv`?
+
+## Est??tica
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy), color = "blue")
+```
+
+Color:
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy, color = class))
+```
+
+Tama??o:
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy, size = class))
+```
+
+Transparencia:
+
+```{r out.width = "50%", fig.align = 'default', warning = FALSE, fig.asp = 1/2, fig.cap =""}
+# Left
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy, alpha = class))
+
+# Right
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy, shape = class))
+```
+
+### Practica
+
+1.  ??Qu?? hace aqu?? el c??digo 'color = "blue"'?
+
+    ```{r}
+    ggplot(data = mpg) + 
+      geom_point(mapping = aes(x = displ, y = hwy, color = "blue"))
+    ```
+    
+1.  ??Qu?? variables en 'mpg' son categ??ricas y cu??les continuas?
+
+1.  Mapea una vatiable continua a `color`, `size` y `shape`. ??Cu??l fue la diferencia? 
+    
+1.  ??Qu?? pasa si usas la misma variable para m??ltiples atributos *est??ticos*? 
+
+1.  ??Qu?? hace el atributo `stroke`?
+    
+1.  ??Qu?? pasa si utilizas una expresi??n como 'displ < 5' y la utilizas para mapear el color?
