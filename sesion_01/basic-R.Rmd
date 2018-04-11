@@ -1,4 +1,9 @@
-# Flujo de trabajo
+---
+title: "R básico"
+author: "David Suárez <david.suarez@yahoo.com>"
+date: "10 de abril de 2018"
+output: html_document
+---# Flujo de trabajo
 
 ## Coding
 
@@ -16,7 +21,7 @@ Asigna a variables con `<-`:
 x <- 3 * 4
 ```
 
-Forma general de una asignaci??n:
+Forma general de una asignación:
 
 ```{r eval = FALSE}
 object_name <- value
@@ -26,7 +31,7 @@ Tip: usa Alt + - para introducir la flecha en **RStudio**
 
 ## Nombres de variable
 
-Los nombres de los objetos en R empiezan con una letter y est??n formados por letras (preferiblemente en ascii o parte del conjunto base de UTF7), n??meros, gui??n bajo y ??punto! Algunos ejemplos son:
+Los nombres de los objetos en R empiezan con una letra y están formados por letras (preferiblemente en ascii o parte del conjunto base de UTF7), números, guión bajo y ¡punto! Algunos ejemplos son:
 ```{r, eval = FALSE}
 i_use_snake_case
 otherPeopleUseCamelCase
@@ -34,19 +39,19 @@ some.people.use.periods
 And_aFew.People_RENOUNCEconvention
 ```
 
-La consola interactiva de R imprime el valor devuelto por la ??ltima expresi??n ejecutada en R:
+La consola interactiva de R imprime el valor devuelto por la última expresión ejecutada en R:
 
 ```{r}
 x
 ```
 
-Usando la tecla de tabulaci??n, podemos completar expresiones largas:
+Usando la tecla de tabulación, podemos completar expresiones largas:
 
 ```{r}
 this_is_a_really_long_name <- 2.5
 ```
 
-Usa las flechas arriba y abajo (???/??? ) para navegar por el historial.
+Usa las flechas arriba y abajo para navegar por el historial.
 
 Crea una nueva variable:
 
@@ -54,7 +59,7 @@ Crea una nueva variable:
 r_rocks <- 2 ^ 3
 ```
 
-Checa su valor. ??Qu?? pas???
+Checa su valor. ¿Qué pasó?
 
 ```{r, eval = FALSE}
 r_rock
@@ -72,13 +77,13 @@ Hay MUCHAS funciones en R. Todas se ejecutan de la siguiente manera:
 function_name(arg1 = val1, arg2 = val2, ...)
 ```
 
-Hay una funci??n llamada 'seq()' y otra llamada 'c()' que se utilizan mucho en R. ??Para qu?? servir??n?
+Hay una función llamada 'seq()' y otra llamada 'c()' que se utilizan mucho en R. ¿Para qué servirán?
 
 ```{r}
 seq(1, 10)
 ```
 
-Aqu?? crearemos una cadena de texto:
+Aquí crearemos una cadena de texto:
 
 ```
 x <- "hello world
@@ -89,24 +94,24 @@ x <- "hello world
 +
 ```
 
-??Qu?? pas?? ahora?
+¿Qué pasó ahora?
 
-La asignaci??n no imprime nada, pues no regresa un valor, s??lo almacena el valor en una variable.
+La asignación no imprime nada, pues no regresa un valor, sólo almacena el valor en una variable.
 
-As?? que podemos hacer lo siguiente,
+Así que podemos hacer lo siguiente,
 
 ```{r}
 y <- seq(1, 10, length.out = 5)
 y
 ```
 
-o a??n mejor:
+o aún mejor:
 
 ```{r}
 (y <- seq(1, 10, length.out = 5))
 ```
 
-??Qu?? har?? la funci??n 'ls()'?
+¿Qué hará la función 'ls()'?
 
 ```{r, echo = FALSE, out.width = NULL}
 knitr::include_graphics("screenshots/rstudio-env.png")
@@ -114,14 +119,14 @@ knitr::include_graphics("screenshots/rstudio-env.png")
 
 ## Ejercicios:
 
-1.  ??Por qu?? no funciona este c??digo?
+1.  ¿Por qué no funciona este código?
 
     ```{r, error = TRUE}
     my_variable <- 10
-    my_var??able
+    my_var1able
     ```
 
-1.  Tweak each of the following R commands so that they run correctly:
+1.  Ajusta el siguiente código para que se ejecute correctamente:
 
     ```{r, eval = FALSE}
     library(tidyverse)
@@ -133,7 +138,6 @@ knitr::include_graphics("screenshots/rstudio-env.png")
     filter(diamond, carat > 3)
     ```
 
-??Ya viste los errores? ??Qu?? har?? la funci??n 'filter()'?
+¿Ya viste los errores? ¿Qué hace la función 'filter()'?
     
-1.  Intenta usar Alt + Shift + K en RStudio, ??qu?? pas???
-
+1.  Intenta usar Alt + Shift + K en RStudio, ¿qué pasó?

@@ -1,4 +1,11 @@
-# Un poco de visualizaci??n, la m??nima para realmente disfrutar R
+---
+title: "Visualización 101"
+author: "David Suárez <david.suarez@yahoo.com>"
+date: "10 de abril de 2018"
+output: html_document
+---
+
+# Un poco de visualización, la mínima para realmente disfrutar R
 
 ## Usaremos una biblioteca de R
 
@@ -18,6 +25,12 @@ Las bibliotecas de R frecuentemente incluyen sus propios datasets:
 mpg
 ```
 
+### graphics::plot
+
+
+```{r}
+plot(mpg$displ, mpg$hwy)
+```
 
 ### ggplot
 
@@ -25,7 +38,7 @@ mpg
 ```{r}
 ggplot(data = mpg) + 
   geom_point(mapping = aes(x = displ, y = hwy))
-```plot(mpg$displ, mpg$hwy)
+```
 
 
 ### Una platilla para graficar
@@ -37,17 +50,17 @@ ggplot(data = <DATA>) +
 
 ### Ejercicios
 
-1.  Ejecuta `ggplot(data = mpg)`. ??Qu?? ves?
+1.  Ejecuta `ggplot(data = mpg)`. ¿Qué ves?
 
-1.  ??Qu?? forma tiene `mpg`? ??Qu?? tipo de objeto es?
+1.  ¿Qué forma tiene `mpg`? ¿Qué tipo de objeto es?
 
-1.  ??Qu?? cosas contiene la columna 'drv'?
+1.  ¿Qué cosas contiene la columna 'drv'?
      
 1.  Grafica `hwy` vs `cyl`
 
-1.  ??Qu?? pasa si graficas `class` vs `drv`?
+1.  ¿Qué pasa si graficas `class` vs `drv`?
 
-## Est??tica
+## Estética
 
 ```{r}
 ggplot(data = mpg) + 
@@ -61,7 +74,7 @@ ggplot(data = mpg) +
   geom_point(mapping = aes(x = displ, y = hwy, color = class))
 ```
 
-Tama??o:
+Tamaño:
 
 ```{r}
 ggplot(data = mpg) + 
@@ -71,30 +84,30 @@ ggplot(data = mpg) +
 Transparencia:
 
 ```{r out.width = "50%", fig.align = 'default', warning = FALSE, fig.asp = 1/2, fig.cap =""}
-# Left
+# Izquierda
 ggplot(data = mpg) + 
   geom_point(mapping = aes(x = displ, y = hwy, alpha = class))
 
-# Right
+# Derecha
 ggplot(data = mpg) + 
   geom_point(mapping = aes(x = displ, y = hwy, shape = class))
 ```
 
 ### Practica
 
-1.  ??Qu?? hace aqu?? el c??digo 'color = "blue"'?
+1.  ¿Qué hace aquí el código 'color = "blue"'?
 
     ```{r}
     ggplot(data = mpg) + 
       geom_point(mapping = aes(x = displ, y = hwy, color = "blue"))
     ```
     
-1.  ??Qu?? variables en 'mpg' son categ??ricas y cu??les continuas?
+1.  ¿Qué variables en 'mpg' son categóricas y cuáles continuas?
 
-1.  Mapea una vatiable continua a `color`, `size` y `shape`. ??Cu??l fue la diferencia? 
+1.  Mapea una variable continua a `color`, `size` y `shape`. ¿Cuál fue la diferencia? 
     
-1.  ??Qu?? pasa si usas la misma variable para m??ltiples atributos *est??ticos*? 
+1.  ¿Qué pasa si usas la misma variable para múltiples atributos *estéticos*? 
 
-1.  ??Qu?? hace el atributo `stroke`?
+1.  ¿Qué hace el atributo `stroke`?
     
-1.  ??Qu?? pasa si utilizas una expresi??n como 'displ < 5' y la utilizas para mapear el color?
+1.  ¿Qué pasa si utilizas una expresión como 'displ < 5' y la utilizas para mapear el color?
