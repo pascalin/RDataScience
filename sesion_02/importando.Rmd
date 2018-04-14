@@ -1,0 +1,242 @@
+---
+title: "Importando datos en R"
+author: "David Suárez <david.suarez@yahoo.com>"
+date: "14 de abril de 2018"
+output: html_document
+---
+
+# Importando datos en R con `readr`
+
+## Alternativas a read.csv
+
+* `read_csv()` lee archivos delimitados por ',', `read_csv2()` lee archivos separados por ';', `read_tsv()` lee archivos delimitados por tabulación y `read_delim()` utiliza un delimitador arbitrario.
+
+* `read_fwf()` lee archivos con campos de ancho fijo.
+
+* `read_table()` lee archivos en que las columnas están separadas por espacios.
+
+* `read_log()` lee archivos de registro (log) estilo Apache.
+
+El primer argumento de `read_csv()` es el más importante, es la ruta al archivo a importar.
+
+```{r, message = TRUE}
+heights <- read_csv("data/heights.csv")
+```
+
+`read_csv()` intenta adivinar el tipo de cada columna e imprime su resultado. Adicionalmente, puede el argumento `file` puede ser también una cadena de texto:
+
+```{r}
+read_csv("a,b,c
+1,2,3
+4,5,6")
+```
+
+Dos argumentos útiles en esta función son `skip = n` para ignorar las primeras `n` líneas y `comment = "#"` para ignorar las líneas que comiencen con  `#`.
+    
+    ```{r}
+    read_csv("The first line of metadata
+      The second line of metadata
+      x,y,z
+      1,2,3", skip = 2)
+    
+    read_csv("# A comment I want to skip
+      x,y,z
+      1,2,3", comment = "#")
+    ```
+    
+1.  También le podemos decir a `read_csv()` que nuestros datos no tienen encabezados usando `col_names = FALSE`:
+    
+    ```{r}
+    read_csv("1,2,3\n4,5,6", col_names = FALSE)
+    ```
+    
+También podemos usar como argumento `col_names` para indicar los nombres de cada columna:
+    
+    ```{r}
+    read_csv("1,2,3\n4,5,6", col_names = c("x", "y", "z"))
+    ```
+
+Los valores que deben interpretarse como `NA` pueden especificarse con el argumento `na =`:
+
+```{r}
+read_csv("a,b,c\n1,2,.", na = ".")
+```
+
+Esto es lo que necesita uno para leer ~75% de los archivos CSV.
+
+### Práctica
+
+1.  ¿Qué función usarías para leer archivos donde los campos estuvieran separados por "|"?
+    
+1.  A veces las cadenas en un archivo CSV incluyen comas y para prevenir que causen problemas deben estar entre comillas. `read_csv()` asume que las cadenas de texto están delimitadas por `"`, pero esto puede cambiarse empleando `read_delim()`. Usa esta función para leer el siguiente texto como data frame.
+    
+    ```{r, eval = FALSE}
+    "x,y\n1,'a,b'"
+    ```
+    
+1.  ¿Cuál es el problema con las siguientes entradas?
+    
+    ```{r, eval = FALSE}
+    read_csv("a,b\n1,2,3\n4,5,6")
+    read_csv("a,b,c\n1,2\n1,2,3,4")
+    read_csv("a,b\n\"1")
+    read_csv("a,b\n1,2\na,b")
+    read_csv("a;b\n1;3")
+    ```
+
+## Parseo
+
+```{r}
+str(parse_logical(c("TRUE", "FALSE", "NA")))
+str(parse_integer(c("1", "2", "3")))
+str(parse_date(c("2010-01-01", "1979-10-14")))
+```
+
+
+```{r}
+parse_integer(c("1", "231", ".", "456"), na = ".")
+```
+
+
+
+```{r}
+x <- parse_integer(c("123", "345", "abc", "123.45"))
+```
+
+
+
+```{r}
+x
+```
+
+
+```{r}
+problems(x)
+```
+
+
+1.  `parse_logical()`
+
+1. `parse_integer()`
+
+1. `parse_double()`
+
+1. `parse_number()` 
+
+1.  `parse_character()`
+
+1.  `parse_factor()`
+
+1.  `parse_datetime()`, `parse_date()` y `parse_time()`
+
+
+## Números
+
+```{r}
+parse_number("$100")
+parse_number("20%")
+parse_number("It cost $123.45")
+```
+
+
+```{r}
+# Used in America
+parse_number("$123,456,789")
+
+# Used in many parts of Europe
+parse_number("123.456.789", locale = locale(grouping_mark = "."))
+
+# Used in Switzerland
+parse_number("123'456'789", locale = locale(grouping_mark = "'"))
+```
+
+### Cadenas
+
+```{r}
+charToRaw("Hadley")
+```
+
+
+```{r}
+x1 <- "El Ni\xf1o was particularly bad this year"
+x2 <- "\x82\xb1\x82\xf1\x82\xc9\x82\xbf\x82\xcd"
+
+x1
+x2
+```
+
+```{r}
+parse_character(x1, locale = locale(encoding = "Latin1"))
+parse_character(x2, locale = locale(encoding = "Shift-JIS"))
+```
+
+
+```{r}
+guess_encoding(charToRaw(x1))
+guess_encoding(charToRaw(x2))
+```
+
+### Factors {#readr-factors}
+
+```{r}
+fruit <- c("apple", "banana")
+parse_factor(c("apple", "banana", "bananana"), levels = fruit)
+```
+
+### Fechas, fechas, fechas
+
+*   `parse_datetime()` espera una fecha en formato ISO8601: year, month, day, hour, minute, second.
+    
+    ```{r}
+    parse_datetime("2010-10-01T2010")
+    # ¿Qué pasa con la hora?
+    parse_datetime("20101010")
+    ```
+    
+
+*   `parse_date()` espera un año de cuatro dígitos, `-` o `/`, el mes, `-` o `/`, y el día:
+    
+    ```{r}
+    parse_date("2010-10-01")
+    ```
+
+*   `parse_time()` espera la hora, `:`, minutos y opcionalmente `:` y los segundos, así como un am/pm opcional:
+  
+    ```{r}
+    library(hms)
+    parse_time("01:10 am")
+    parse_time("20:10:01")
+    ```
+    
+
+```{r}
+parse_date("01/02/15", "%m/%d/%y")
+parse_date("01/02/15", "%d/%m/%y")
+parse_date("01/02/15", "%y/%m/%d")
+```
+
+### Exercises
+
+1.  ¿Qué argumentos necesita `locale()`? 
+
+1.  Convierte las siguientes cadenas a fechas:   
+
+    ```{r}
+    d1 <- "January 1, 2010"
+    d2 <- "2015-Mar-07"
+    d3 <- "06-Jun-2017"
+    d4 <- c("August 19 (2015)", "July 1 (2015)")
+    d5 <- "12/30/14" # Dec 30, 2014
+    t1 <- "1705"
+    t2 <- "11:15:10.12 PM"
+    ```
+
+```{r}
+guess_parser("2010-10-01")
+guess_parser("15:01")
+guess_parser(c("TRUE", "FALSE"))
+guess_parser(c("1", "5", "9"))
+guess_parser(c("12,352,561"))
+
+str(parse_guess("2010-10-10"))
+```

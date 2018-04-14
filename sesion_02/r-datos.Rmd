@@ -1,0 +1,128 @@
+---
+title: "Trabajando con datos en R"
+author: "David Suarez <david.suarez@yahoo.com>"
+date: "13 de abril de 2018"
+output: revealjs::revealjs_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Tipos básicos en R
+
+Estos tipos son los más comúnmente utilizados en R: lógicos, enteros, flotantes y cadenas de texto.
+
+```
+(logico <- c(T, T , F, T, NA, F))
+(entero <- c(0L, 2L, 4L, 6L, 8L))
+(flotante <- c(1, 3.0, 5, 6, pi))
+(texto <- c("a", "e", "i", "o", "u"))
+```
+
+```{r}
+(logico <- c(T, T , F, T, NA, F))
+(entero <- c(0L, 2L, 4L, 6L, 8L))
+(flotante <- c(1, 3.0, 5, 6, pi))
+(texto <- c("a", "e", "i", "o", "u"))
+```
+
+## Tipos complejos
+
+Estos tipos complejos o estructuras agrupan datos de distintos tipos o en varias dimensiones, a diferencia de los vectores que sólo tienen una dimensión (length).
+
+```
+(v <- 1:100)
+length(v)
+```
+
+```{r}
+(v <- 1:100)
+length(v)
+```
+
+---
+
+### Matrices
+
+```
+(matriz <- matrix(seq(0, 1, length.out = 100), ncol = 10, byrow = T))
+```
+
+```{r}
+(matriz <- matrix(seq(0, 1, length.out = 100), ncol = 10, byrow = T))
+```
+
+---
+
+### Arreglos
+
+```
+(arreglo <- array(1:27, dim=c(3,3,3)))
+```
+
+```{r}
+(arreglo <- array(1:27, dim=c(3,3,3)))
+```
+
+---
+
+Los __Factores__ son un tipo de dato en R empleado para variables categóricas. Tiene un atributo llamado `levels` que indica los posibles valores que puede contener el factor.
+```
+(mi_factor <- factor(rep(1:5, 25)))
+(sexos <- factor(c('f', 'f', 'm', 'f', 'm', 'f', 'm'), levels = c('m', 'f')))
+table(sexos)
+```
+```{r}
+(mi_factor <- factor(rep(1:5, 25)))
+(sexos <- factor(c('f', 'f', 'm', 'f', 'm', 'f', 'm'), levels = c('m', 'f')))
+table(sexos)
+```
+
+---
+
+Las __Listas__ almacenan una secuencia de datos heterogéneos (a diferencia) de los vectores, las matrices y los arreglos (arrays).
+
+```
+(lista <- list(c(1, 2, 3), c('a', 'b', 'c'), list(1:10, letters)))
+```
+
+```{r}
+(lista <- list(c(1, 2, 3), c('a', 'b', 'c'), list(1:10, letters)))
+```
+
+---
+
+## DataFrames
+
+Los __DataFrames__ son estructuras de datos bidimensionales. Esencialmente se trata de una lista de vectores de la misma longitud, con nombres, en donde cada vector (o columna) representa una variable y cada renglón una observación.
+
+```
+edades <- c(17, 25, 22, 14, 19, 21, 32)
+(df <- data.frame(sexos, edades))
+```
+
+```{r}
+edades <- c(17, 25, 22, 14, 19, 21, 32)
+(df <- data.frame(sexos, edades))
+```
+
+## Usando `plot` para explorar un conjunto de datos
+
+La función `graphics::plot` es capaz de ofrecer un gráfico significativo para la mayor parte de los tipos de datos.
+
+```
+if (require(graphics)) {
+plot(df)
+}
+```
+
+```{r}
+if (require(graphics)) {
+plot(df)
+}
+```
+
+## `dplyr::tibble`
+
+Los __Tibbles__ son una versión modificada del tipo `data.frame` que lo hace un poco más amigable. La mayoría de las funciones de las bibliotecas en el _tidyverse_ devuelven _tibbles_. Para convertirlos a `data.frame` se puede usar: `as.data.frame()`

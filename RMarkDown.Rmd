@@ -1,0 +1,56 @@
+# RMarkDown
+
+## Agregando formato de Markdown
+
+### Encabezados
+
+# Encabezado grande
+
+> `# Encabezado grande`
+
+## Encabezado medio
+
+> `## Encabezado medio`
+
+### Encabezado pequeño
+
+> `### Encabezado pequeño`
+
+### Listas
+
+1. Lista con números
+
+> `0. Lista con números`
+
+* Lista con viñetas
+
+> `* Lista con viñetas`
+
+### Blockquote
+
+> `> Texto pre-formateado`
+
+### Estilos de texto
+
+_Cursiva_
+
+> `_Cursiva_`
+
+**Negrita**
+
+> `**Negrita**`
+
+-Tachado-
+
+> `~Tachar~`
+
+### Código
+
+> Bloque de código:	```
+> 
+> Código:	`código`
+> 
+
+### Separadores
+
+> Divisor: ---
