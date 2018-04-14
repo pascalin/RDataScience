@@ -6,6 +6,9 @@ output: html_document
 ---
 
 # Importando datos en R con `readr`
+```{r setup}
+library(readr)
+```
 
 ## Alternativas a read.csv
 
@@ -20,7 +23,7 @@ output: html_document
 El primer argumento de `read_csv()` es el más importante, es la ruta al archivo a importar.
 
 ```{r, message = TRUE}
-heights <- read_csv("data/heights.csv")
+(heights <- read_csv("../data/heights.csv"))
 ```
 
 `read_csv()` intenta adivinar el tipo de cada columna e imprime su resultado. Adicionalmente, puede el argumento `file` puede ser también una cadena de texto:
@@ -240,3 +243,8 @@ guess_parser(c("12,352,561"))
 
 str(parse_guess("2010-10-10"))
 ```
+
+```{r, message = TRUE}
+(wifi <- read_csv("../data/wifi-19s.csv"))
+```
+

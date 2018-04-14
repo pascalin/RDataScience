@@ -6,6 +6,7 @@ output: revealjs::revealjs_presentation
 ---
 
 ```{r setup, include=FALSE}
+require("revealjs")
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
@@ -103,7 +104,7 @@ edades <- c(17, 25, 22, 14, 19, 21, 32)
 ```
 
 ```{r}
-edades <- c(17, 25, 22, 14, 19, 21, 32)
+edades <- c(17, 25, NA, NA, 19, 21, 32)
 (df <- data.frame(sexos, edades))
 ```
 
