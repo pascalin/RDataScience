@@ -1,0 +1,237 @@
+---
+title: "Transformando DataFrames"
+author: "David Suárez <david.suarez@yahoo.com>"
+date: "21 de abril de 2018"
+output: html_document
+---
+
+# Manipulación de DataFrames
+
+Como siempre, en R Hay muchas maneras de manipular el contenido de un DataFrame. Primero, carguemos en memoria un conjunto de datos:
+
+```{r}
+heights <- readRDS("../data/heights.RDS")
+str(heights)
+```
+---
+En segundo lugar, si queremos trabajar solamente con el conjunto de las mujeres, una forma sería a través de un índice:
+```{r}
+mujeres <- heights$sex=="female"
+heights_f <- heights[mujeres,]
+```
+---
+
+Si quisiéramos insertar una nueva columna en el data frame, conteniendo el IMC:
+```{r}
+imc <- heights_f$weight/heights_f$height^2
+heights_f <- cbind(heights_f, imc=imc)
+```
+
+---
+
+Ahora, si queremos ordenar el DataFrame con respecto al ingreso, podemos usar `order()`:
+```{r}
+ingreso <- order(heights_f$income)
+heights_f <- heights_f[ingreso,]
+```
+
+## Funciones alternativas
+
+Además de las estrategias anteriores, también podemos usar las funciones: `subset`, `transform` y `split`
+
+## Práctica
+
+1. ¿Cómo ordenarías el mismo dataframe con respecto al ingreso, pero en orden descendente?
+
+2. ¿Cómo podemos obtener el promedio del ingreso de acuerdo al grupo racial?
+
+## Usando `dplyr
+
+Esta librería ofrece funciones muy prácticas para la transformación de dataframes. Puedes instalarla sola o como parte del `tidyverse`
+
+```{r setup, message = FALSE}
+if (!require(nycflights13)) {
+  proceed <- as.factor(readline(prompt="Se necesita la biblioteca `nycflights13`, ¿quieres instalarla? (y/n): "), levels=c('y', 'n'))
+  if (proceed == 'y')
+    install.packages(nycflights13)
+}
+#library(tidyverse)
+library(dplyr)
+```
+
+### nycflights13
+
+El DataFrame `nycflights13::flights` contiene los datos de todos (`r format(nrow(nycflights13::flights), big.mark = ",")`) los vuelos que salieron de la ciudad de New York en 2013. Puedes ver su descripción usando `?flights`.
+
+```{r}
+flights
+```
+
+### Funciones en dplyr
+
+`dplyr` nos facilita:
+
+* Escoger observaciones de acuerdo a sus valores (`filter()`).
+* Reordenar las observaciones (`arrange()`).
+* Escoger variables de acuerdo a su nombre (`select()`).
+* Crear nuevas variables a partir de las existentes (`mutate()`).
+* Colapsar muchos valores a un solo resumen (`summarise()`).
+
+Además existe también la función `group_by()`.
+
+Todas funcionan de forma similar:
+
+1.  El primer argumento es un data frame.
+
+1.  Los siguientes describen qué hacer con esos datos usando los nombres de las variables (sin comillas).
+    
+1.  Regresan un nuevo dataframe
+
+## `filter()`
+
+```{r}
+filter(flights, month == 1, day == 1)
+```
+
+
+```{r}
+jan1 <- filter(flights, month == 1, day == 1)
+```
+
+```{r}
+(dec25 <- filter(flights, month == 12, day == 25))
+```
+
+### Comparaciones en R
+
+```{r}
+sqrt(2) ^ 2 == 2
+1/49 * 49 == 1
+```
+
+En lugar de `==`, puedes usar `near()`:
+
+```{r}
+near(sqrt(2) ^ 2,  2)
+near(1 / 49 * 49, 1)
+```
+
+```{r, eval = FALSE}
+filter(flights, month == 11 | month == 12)
+```
+
+```{r, eval = FALSE}
+nov_dec <- filter(flights, month %in% c(11, 12))
+```
+
+```{r, eval = FALSE}
+filter(flights, !(arr_delay > 120 | dep_delay > 120))
+filter(flights, arr_delay <= 120, dep_delay <= 120)
+```
+
+### Práctica
+
+1.  Encuentra los vuelos que:
+
+    1. Hayan tenido un retraso mayor a dos horas
+    1. Hayan volado hacia San Franciso (SFO)
+    1. Salieron de las 12 de la noche a las 6 de la mañana
+
+
+## `arrange()`
+
+```{r}
+arrange(flights, year, month, day)
+```
+
+```{r}
+arrange(flights, desc(arr_delay))
+```
+
+### Práctica
+
+1.  Encuentra los 20 vuelos más cortos:
+
+```{r}
+arrange(flights, air_time)[1:20,]
+```
+
+
+
+## `select()`
+
+```{r}
+# Select columns by name
+select(flights, year, month, day)
+# Select all columns between year and day (inclusive)
+select(flights, year:day)
+# Select all columns except those from year to day (inclusive)
+select(flights, -(year:day))
+```
+
+También puedes usar estas funciones junto con `select()`:
+
+* `starts_with("abc")`
+
+* `ends_with("xyz")`
+
+* `contains("ijk")`
+
+* `matches("(.)\\1")`
+   
+*  `num_range("x", 1:3)`
+
+* `everything()`
+
+## `rename()`
+
+```{r}
+rename(flights, tail_num = tailnum)
+```
+
+## `mutate()`
+
+```{r}
+flights_sml <- select(flights, 
+  year:day, 
+  ends_with("delay"), 
+  distance, 
+  air_time
+)
+mutate(flights_sml,
+  gain = arr_delay - dep_delay,
+  speed = distance / air_time * 60
+)
+```
+
+
+```{r}
+mutate(flights_sml,
+  gain = arr_delay - dep_delay,
+  hours = air_time / 60,
+  gain_per_hour = gain / hours
+)
+```
+
+## `transmute()`
+
+```{r}
+transmute(flights,
+  gain = arr_delay - dep_delay,
+  hours = air_time / 60,
+  gain_per_hour = gain / hours
+)
+```
+
+## `summarise()`
+
+
+```{r}
+summarise(flights, delay = mean(dep_delay, na.rm = TRUE))
+```
+
+## `group_by()`
+```{r}
+by_day <- group_by(flights, year, month, day)
+summarise(by_day, delay = mean(dep_delay, na.rm = TRUE), delay_sd = sd(dep_delay, na.rm =TRUE))
+```

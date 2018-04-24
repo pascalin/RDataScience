@@ -1,0 +1,177 @@
+---
+title: "Programando con funciones en R"
+author: "David Suárez <david.suarez@yahoo.com>"
+date: "21 de abril de 2018"
+output: html_document
+---
+## Más sobre las funciones en R
+
+Las funciones son objetos en R con los que pueden realizarse distintas acciones. Por ejemplo:
+
+### Definición
+
+```{r}
+function(x, y, z) {x*y*z}
+```
+
+### Asignación
+
+```{r}
+f <- function(x, y, z) {x*y*z}
+```
+
+### Invocación
+
+```{r}
+f(1, 2, 3)
+```
+
+---
+
+También es posible usar funciones como argumentos:
+
+```{r}
+aplica3 <- function(f) {
+  f(3)
+}
+
+aplica3(log) #log(3)
+aplica3(sqrt) #sqrt(3)
+```
+
+O como el valor de retorno de una función:
+
+```{r}
+aplica_x <- function(x) {
+  function(f) {f(x)}
+}
+
+aplica2 <- aplica_x(2)
+aplica2(log) #log(2)
+```
+
+Fíjate en el tipo de dato que devuelven las invocaciones a la siguiente función:
+
+```{r}
+multiplicador <- function(fac) {
+  function (x) x*fac
+}
+typeof(multiplicador(25))
+```
+
+Tanto funciones como *closures* pueden colocarse en una lista para ser invocados secuencialmente por funciones de la familia `*apply`:
+
+```{r}
+factores <- lapply(1:10, multiplicador)
+lapply(factores, function (f, x) f(x), x=1:100)
+```
+Lo que hacen estas funciones es tomar una colección de objetos como primer argumento (típicamente un dataframe, un vector o una matriz) y aplicar a cada uno de los elementos de la colección una función, que recibe como segundo argumento. Así, en las dos líneas anteriores se generan los primeros 100 múltiplos de los números del 1 al 10.
+<!-- identidad <- multiplicador(1) -->
+<!-- identidad(3) -->
+<!-- identidad(100) -->
+<!-- centenas <- multiplicador(100) -->
+<!-- centenas(1) -->
+<!-- centenas(10) -->
+<!-- multiplicador <- function(fac) { -->
+<!-- function (x, y) (x+y)*fac -->
+<!-- } -->
+<!-- centenas <- multiplicador(100) -->
+<!-- centenas(5, 6) -->
+<!-- cursoR <- data.frame(nombres=c('david', 'jorge', 'arturo', 'rodrigo', 'mario', 'sadi'), edades=c(38, 33, 34, 25, 27, 29)) -->
+<!-- edades <- cursoR$edades -->
+<!-- edades * 4 -->
+<!-- edades * 2 -->
+<!-- edades + 10 -->
+<!-- `+`(edades, 10) -->
+<!-- sum(edades) -->
+<!-- mean(edades) -->
+<!-- cumsum(edades) -->
+<!-- nombres <- c("Xcomo.te.llamas...", "Xdeterminante.tienda", "Xproducto.inventario") -->
+<!-- arregla_nombres <- function(x) {} -->
+<!-- arregla_nombres <- function(x) { -->
+<!-- } -->
+<!-- ?sub -->
+<!-- sub("a", ".", 'david') -->
+<!-- source('~/.active-rstudio-document', echo=TRUE) -->
+<!-- nombres <- c("Xcomo.te.llamas...", "Xdeterminante.tienda", "Xproducto.inventario") -->
+<!-- source('~/.active-rstudio-document', echo=TRUE) -->
+<!-- nombres <- c("Xcomo.te.llamas...", "Xdeterminante.tienda", "Xproducto.inventario") -->
+<!-- arregla_nombres(nombres) -->
+<!-- source('~/.active-rstudio-document', echo=TRUE) -->
+<!-- arregla_nombres(nombres) -->
+<!-- source('~/.active-rstudio-document', echo=TRUE) -->
+<!-- arregla_nombres(nombres) -->
+<!-- nombres <- c("Xcomo.te.llamas...", "Xdeterminante.tienda", "Xproducto.inventario") -->
+<!-- arregla_nombres(nombres) -->
+<!-- arregla_nombre <- function(x) { -->
+<!-- gsub('[.]', ' ', x)) -->
+<!-- } -->
+<!-- source('~/.active-rstudio-document', echo=TRUE) -->
+<!-- source('~/.active-rstudio-document', echo=TRUE) -->
+<!-- nombres[1] -->
+<!-- arregla_nombre(nombres[1]) -->
+<!-- lapply(nombres, arregla_nombre) -->
+<!-- sapply(nombres, arregla_nombre) -->
+
+
+<!-- biblioteca <- read.csv("data/biblioteca.csv", stringsAsFactors = FALSE, -->
+<!--                        colClasses = c(biblioteca_fecha_fundacion='Date', fecha_mod='POSIXct'), -->
+<!--                        check.names = FALSE, fileEncoding = "latin1") -->
+<!-- colnames(biblioteca) -->
+
+<!-- View(biblioteca) -->
+<!-- library(dplyr) -->
+<!-- %>% -->
+<!-- library(tidyverse) -->
+<!-- %>% -->
+<!-- `%>%`` -->
+<!-- `%>%` -->
+<!-- `%>%` -->
+<!-- biblioteca %>% group_by(nom_ent) -->
+<!-- biblioteca %>% group_by(nom_ent) %>% rename(coleccion=biblioteca_numero_coleccion) -->
+<!-- biblioteca %>% group_by(nom_ent) %>% rename(coleccion=biblioteca_numero_coleccion) %>% summarise(tamano_coleccion=mean(coleccion)) -->
+<!-- estadisticas <- list(promedio=mean, desviacion=sd, rango=range) -->
+<!-- biblioteca %>% filter(nom_ent=="Aguascalientes") -->
+<!-- biblioteca %>% filter(nom_ent=="Aguascalientes")$biblioteca_numero_coleccion -->
+<!-- (biblioteca %>% filter(nom_ent=="Aguascalientes"))$biblioteca_numero_coleccion -->
+<!-- colecciones <- (biblioteca %>% filter(nom_ent=="Aguascalientes"))$biblioteca_numero_coleccion -->
+<!-- estadisticas -->
+<!-- lapply(colecciones, estadisticas) -->
+<!-- lapply(colecciones, `*`, 10) -->
+<!-- cacula <- function(x, stats) {} -->
+<!-- cacula <- function(x, stats) { -->
+<!-- resultados <- NULL -->
+<!-- for (e in stats) resultados <- c(resultados, e(x)) -->
+<!-- resultados -->
+<!-- } -->
+<!-- calcula <- function(x, stats) { -->
+<!-- resultados <- NULL -->
+<!-- for (e in stats) resultados <- c(resultados, e(x)) -->
+<!-- resultados -->
+<!-- } -->
+<!-- calcula(colecciones, estadisticas) -->
+<!-- lapply(estadisticas, function (e, x) e(x), colecciones ) -->
+
+
+
+<!-- 3 + 4 -->
+
+<!-- vector <- seq(1, 16) -->
+<!-- matriz <- matrix(vector, ncol=2, byrow=T) -->
+<!-- print(matriz) -->
+
+<!-- 1 / 200 * 30 -->
+<!-- (59 + 73 + 2) / 3 -->
+<!-- sin(pi / 2) -->
+
+<!-- arregla_nombres <- function(x) { -->
+<!--   nombres <- NULL -->
+<!--   for (i in 1:length(x)) { -->
+<!--     nombres <- c(nombres, gsub('[.]', ' ', x[i])) -->
+<!--   } -->
+<!--   return(nombres) -->
+<!-- } -->
+
+<!-- arregla_nombre <- function(x) { -->
+<!--     gsub('[.]', ' ', x) -->
+<!-- } -->
