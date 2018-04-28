@@ -1,0 +1,91 @@
+---
+title: "Modelando con R"
+author: "David Suárez <david.suarez@yahoo.com>"
+date: "28 de abril de 2018"
+output: revealjs::revealjs_presentation
+---
+
+# Modelación
+
+En general hay dos pasos en todo proceso de modelación:
+
+1.  Escoges una familia de modelos `y = a_1 * x + a_2` o `y = a_1 * x ^ a_2`.
+
+1.  Generas un modelo ajustado, como `y = 3 * x + 7` o `y = 9 * x ^ 2`, donde `a_1` y `a_2` toman ciertos valores.
+
+A través de este proceso obtendremos el mejor modelo, pero no necesariamente el verdadero. Como dice un aforismo de George Box:
+
+> All models are wrong, but some are useful.
+
+La cita completa es:
+
+> Now it would be very remarkable if any system existing in the real world 
+> could be exactly represented by any simple model. However, cunningly chosen 
+> parsimonious models often do provide remarkably useful approximations. For 
+> example, the law PV = RT relating pressure P, volume V and temperature T of 
+> an "ideal" gas via a constant R is not exactly true for any real gas, but it 
+> frequently provides a useful approximation and furthermore its structure is 
+> informative since it springs from a physical view of the behavior of gas 
+> molecules.
+> 
+> For such a model there is no need to ask the question "Is the model true?". 
+> If "truth" is to be the "whole truth" the answer must be "No". The only 
+> question of interest is "Is the model illuminating and useful?".
+
+La meta de la modelación no es descubrir la verdad, sino obtener una buena aproximación que sea útil. 
+
+### Prerequisitos: modelr
+
+```{r setup, message = FALSE}
+#library(tidyverse)
+
+library(modelr)
+options(na.action = na.warn)
+```
+
+## Un modelo simple
+
+modelr::sim1
+
+```{r}
+ggplot(sim1, aes(x, y)) + 
+  geom_point()
+```
+
+Pareciera haber un patrón en nuestros datos, y pareciera ser lineal: `y = a_0 + a_1 * x`.
+
+```{r}
+models <- tibble(
+  a1 = runif(250, -20, 40),
+  a2 = runif(250, -5, 5)
+)
+
+ggplot(sim1, aes(x, y)) + 
+  geom_abline(aes(intercept = a1, slope = a2), data = models, alpha = 1/4) +
+  geom_point() 
+```
+
+Pero, qué tan bueno es cada uno de esos modelos:
+
+```{r, echo = FALSE}
+dist1 <- sim1 %>% 
+  mutate(
+    dodge = rep(c(-1, 0, 1) / 20, 10),
+    x1 = x + dodge,
+    pred = 7 + x1 * 1.5
+  )
+
+ggplot(dist1, aes(x1, y)) + 
+  geom_abline(intercept = 7, slope = 1.5, colour = "grey40") +
+  geom_point(colour = "grey40") +
+  geom_linerange(aes(ymin = y, ymax = pred), colour = "#3366FF") 
+```
+
+Para calcular esas funciones, requerimos convertir nuestra familia de modelos en una función:
+
+```{r}
+model1 <- function(a, data) {
+  a[1] + data$x * a[2]
+}
+model1(c(7, 1.5), sim1)
+```
