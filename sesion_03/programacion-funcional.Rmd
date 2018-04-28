@@ -175,3 +175,114 @@ Lo que hacen estas funciones es tomar una colección de objetos como primer argu
 <!-- arregla_nombre <- function(x) { -->
 <!--     gsub('[.]', ' ', x) -->
 <!-- } -->
+
+## Ejemplo: integración numérica
+
+La idea detrás de la integración es sencilla, se trata de encontrar el área bajo la curva aproximándola por sus componentes. Las reglas más simples son por punto medio y trapezoide. La regla del punto medio aproxima el área bajo la curva empleando un rectángulo. La regla del trapezoide usa un trapezoide. Cada una toma la función que queremos integrar `f` y el rango de valores, de `a` a `b`. Por ejemplo, la función a integrar puede ser `sen(x)` y el rango, de 0 to $\pi$.
+
+```{r}
+midpoint <- function(f, a, b) {
+  (b - a) * f((a + b) / 2)
+}
+
+trapezoid <- function(f, a, b) {
+  (b - a) / 2 * (f(a) + f(b))
+}
+
+midpoint(sin, 0, pi)
+trapezoid(sin, 0, pi)
+```
+
+
+
+```{r, mid-trap}
+midpoint_composite <- function(f, a, b, n = 10) {
+  points <- seq(a, b, length = n + 1)
+  h <- (b - a) / n
+
+  area <- 0
+  for (i in seq_len(n)) {
+    area <- area + h * f((points[i] + points[i + 1]) / 2)
+  }
+  area
+}
+
+trapezoid_composite <- function(f, a, b, n = 10) {
+  points <- seq(a, b, length = n + 1)
+  h <- (b - a) / n
+
+  area <- 0
+  for (i in seq_len(n)) {
+    area <- area + h / 2 * (f(points[i]) + f(points[i + 1]))
+  }
+  area
+}
+
+midpoint_composite(sin, 0, pi, n = 10)
+midpoint_composite(sin, 0, pi, n = 100)
+trapezoid_composite(sin, 0, pi, n = 10)
+trapezoid_composite(sin, 0, pi, n = 100)
+```
+
+
+
+```{r, echo = FALSE, eval = FALSE}
+mid <- sapply(1:20, function(n) midpoint_composite(sin, 0, pi, n))
+trap <- sapply(1:20, function(n) trapezoid_composite(sin, 0, pi, n))
+
+matplot(cbind(mid, trap), 
+  xlab = "Number of pieces", ylab = "Estimate of area")
+```
+
+
+```{r}
+composite <- function(f, a, b, n = 10, rule) {
+  points <- seq(a, b, length = n + 1)
+
+  area <- 0
+  for (i in seq_len(n)) {
+    area <- area + rule(f, points[i], points[i + 1])
+  }
+
+  area
+}
+
+composite(sin, 0, pi, n = 10, rule = midpoint)
+composite(sin, 0, pi, n = 10, rule = trapezoid)
+```
+
+
+```{r}
+simpson <- function(f, a, b) {
+  (b - a) / 6 * (f(a) + 4 * f((a + b) / 2) + f(b))
+}
+
+boole <- function(f, a, b) {
+  pos <- function(i) a + i * (b - a) / 4
+  fi <- function(i) f(pos(i))
+
+  (b - a) / 90 *
+    (7 * fi(0) + 32 * fi(1) + 12 * fi(2) + 32 * fi(3) + 7 * fi(4))
+}
+
+composite(sin, 0, pi, n = 10, rule = simpson)
+composite(sin, 0, pi, n = 10, rule = boole)
+```
+
+
+```{r}
+newton_cotes <- function(coef, open = FALSE) {
+  n <- length(coef) + open
+
+  function(f, a, b) {
+    pos <- function(i) a + i * (b - a) / n
+    points <- pos(seq.int(0, length(coef) - 1))
+
+    (b - a) / sum(coef) * sum(f(points) * coef)
+  }
+}
+
+boole <- newton_cotes(c(7, 32, 12, 32, 7))
+milne <- newton_cotes(c(2, -1, 2), open = TRUE)
+composite(sin, 0, pi, n = 10, rule = milne)
+```
