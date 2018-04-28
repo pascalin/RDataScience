@@ -1,0 +1,170 @@
+---
+title: "Trabajando con datasets relacionados"
+author: "David Suárez <david.suarez@yahoo.com>"
+date: "28 de abril de 2018"
+output: revealjs::revealjs_presentation
+---
+## Relacionando distintos datasets
+
+Frecuentemente nuestros datos se encuentran distribuidos en varios datasets. Este es el caso de los datos de la biblioteca `nycflights13`, que contiene varios datasets mutuamente relacionados: `flights`, `airlines`, `planes`, `weather`, ...
+
+Para trabajar con esos datos relacionados la biblioteca `dplyr` es muy útil, pues nos ofrece la posibilidad de hacer distintos tipos de uniones (*joins*) y operaciones de conjuntos.
+
+Antes que nada necesitamos cargar, para esta ocasión las bibliotecas: `dplyr` y `nycflights13`.
+
+```{r setup, message = FALSE}
+library(dplyr)
+library(nycflights13)
+```
+
+## nycflights13
+
+En nycflights13:
+
+* `flights` se conecta con `planes` por medio de la variable, `tailnum`. 
+
+* `flights` se conecta con `airlines` por medio de la variable `carrier`.
+
+* `flights` se conecta con `airports` de dos formas. Por medio de las variables `origin` y `dest`.
+
+* `flights` se connecta con `weather` a través de la variable `origin` y el tiempo
+  `year`, `month`, `day` y `hour`.
+  
+* `weather` y `airports` se conectan a través de la variable `origin` y `dest`, respectivamente.
+
+## Llaves primarias
+
+Una forma de verificar que una variable puede funcionar o es una llave primaria es usar `count`:
+
+```{r}
+planes %>% 
+  count(tailnum) %>% 
+  filter(n > 1)
+
+weather %>% 
+  count(year, month, day, hour, origin) %>% 
+  filter(n > 1)
+```
+
+---
+
+En el caso de los vuelos, las siguientes variables NO funcionan como llaves primarias:
+
+```{r}
+flights %>% 
+  count(year, month, day, flight) %>% 
+  filter(n > 1)
+
+flights %>% 
+  count(year, month, day, tailnum) %>% 
+  filter(n > 1)
+```
+
+---
+
+Sin embargo, cuando el dataset no contiene una llave primaria, es posible improvisar una usando `mutate()` y `row_number()`. ¿Qué combinación de variables podría servir para `flights`.
+
+## Uniones
+
+Para agregar el nombre completo de la aerolínea a `flights`, tendríamos que combinar `airlines` y `flights` por medio de un `left_join()`:
+
+```{r}
+flights %>%
+#  select(-origin, -dest) %>% 
+  left_join(airlines, by = "carrier")
+```
+
+El resultado del *join* es una nueva variable: `name`. Podríamos haber echo lo mismo empleando mutate, pero es más complicado y más difícil de leer:
+
+```{r}
+flights %>%
+#  select(-origin, -dest) %>% 
+  mutate(name = airlines$name[match(carrier, airlines$carrier)])
+```
+
+---
+
+Los distintos tipos de uniones funcionan de la siguiente manera:
+
+```{r, echo = FALSE, out.width = NULL}
+knitr::include_graphics("../diagrams/join-outer.png")
+```
+
+## Llaves primarias
+
+El argumento `by` nos permite conectar los dataframes de distintas maneras:
+
+  * Por defecto, `by = NULL`, hace una *unión natural* usando todas las variables que aparecen en ambos dataframes. Por ejemplo, `flights` y `weather` tienen las siguientes variables en común: `year`, `month`, `day`, `hour` y `origin`.
+
+    ```{r}
+    flights %>% 
+      left_join(weather)
+    ```
+
+  * Un vector de cadenas de texto, `by = "x"`. Usa solamente las variables especificadas. Por ejemplo, `flights` y `planes` tienen una columna `year` pero sus contenidos son diferentes, así que es mejor hacer la unión empleando sólo `tailnum`.
+
+    ```{r}
+    flights %>% 
+      left_join(planes, by = "tailnum")
+    ```
+
+  * Un vector de caracteres con nombres: `by = c("a" = "b")`. Apareará la columna `a` de `x` con los contenidos de la columna `b` en `y`.
+
+    Por ejemplo, si quisiéramos dibujar un mapa, necesitamos combinar los datos de los vuelos con los aeropuertos, para obtener los datos de ubicación (`lat` y `long`) de cada aeropuerto:
+
+    ```{r}
+    flights %>% 
+      left_join(airports, c("dest" = "faa"))
+    
+    flights %>% 
+      left_join(airports, c("origin" = "faa"))
+    ```
+
+### Merge
+
+`base::merge()` hace lo mismo que algunas de las funciones en `dplyr`:
+
+dplyr              | merge
+-------------------|-------------------------------------------
+`inner_join(x, y)` | `merge(x, y)`
+`left_join(x, y)`  | `merge(x, y, all.x = TRUE)`
+`right_join(x, y)` | `merge(x, y, all.y = TRUE)`,
+`full_join(x, y)`  | `merge(x, y, all.x = TRUE, all.y = TRUE)`
+
+## Uniones con filtrado
+
+`semi_join()` y `anti_join()` empatan las observaciones del mismo modo que las uniones, pero afectan a las observaciones y no a las columnas:
+
+* `semi_join(x, y)` __mantiene__ todas las observaciones de `x` que coincidan con observaciones de `y`.
+* `anti_join(x, y)` __descarta__ todas las obserciones de `x` que coincidan con observaciones de `y`.
+
+```{r}
+# Destinos mas populares
+top_dest <- flights %>%
+  count(dest, sort = TRUE) %>%
+  head(10)
+top_dest
+```
+
+Con `semi_join()` podemos usar `top_dest` como un filtro de `flights`:
+
+```{r}
+flights %>% 
+  semi_join(top_dest)
+```
+
+`anti-join()` es útil para diagnosticar problemas con las uniones. Por ejemplo, si uno intenta unir `flights` y `planes`, se podrá dar cuenta de que hay vuelos en `flights` que no tienen un renglón correspondiente en `planes`:
+
+```{r}
+flights %>%
+  anti_join(planes, by = "tailnum") %>%
+  count(tailnum, sort = TRUE)
+```
+
+## Operaciones de conjuntos con dplyr
+
+Estas operaciones trabajan con los renglones, comparándolos entre distintos dataframes. `x` y `y` deben tener las mismas variables:
+
+* `intersect(x, y)`: observaciones en ambos conjuntos `x` y `y`.
+* `union(x, y)`: observaciones de `x` o `y`.
+* `setdiff(x, y)`: observaciones en `x` que no estén en `y`.
