@@ -66,119 +66,14 @@ factores <- lapply(1:10, multiplicador)
 lapply(factores, function (f, x) f(x), x=1:100)
 ```
 Lo que hacen estas funciones es tomar una colección de objetos como primer argumento (típicamente un dataframe, un vector o una matriz) y aplicar a cada uno de los elementos de la colección una función, que recibe como segundo argumento. Así, en las dos líneas anteriores se generan los primeros 100 múltiplos de los números del 1 al 10.
-<!-- identidad <- multiplicador(1) -->
-<!-- identidad(3) -->
-<!-- identidad(100) -->
-<!-- centenas <- multiplicador(100) -->
-<!-- centenas(1) -->
-<!-- centenas(10) -->
-<!-- multiplicador <- function(fac) { -->
-<!-- function (x, y) (x+y)*fac -->
-<!-- } -->
-<!-- centenas <- multiplicador(100) -->
-<!-- centenas(5, 6) -->
-<!-- cursoR <- data.frame(nombres=c('david', 'jorge', 'arturo', 'rodrigo', 'mario', 'sadi'), edades=c(38, 33, 34, 25, 27, 29)) -->
-<!-- edades <- cursoR$edades -->
-<!-- edades * 4 -->
-<!-- edades * 2 -->
-<!-- edades + 10 -->
-<!-- `+`(edades, 10) -->
-<!-- sum(edades) -->
-<!-- mean(edades) -->
-<!-- cumsum(edades) -->
-<!-- nombres <- c("Xcomo.te.llamas...", "Xdeterminante.tienda", "Xproducto.inventario") -->
-<!-- arregla_nombres <- function(x) {} -->
-<!-- arregla_nombres <- function(x) { -->
-<!-- } -->
-<!-- ?sub -->
-<!-- sub("a", ".", 'david') -->
-<!-- source('~/.active-rstudio-document', echo=TRUE) -->
-<!-- nombres <- c("Xcomo.te.llamas...", "Xdeterminante.tienda", "Xproducto.inventario") -->
-<!-- source('~/.active-rstudio-document', echo=TRUE) -->
-<!-- nombres <- c("Xcomo.te.llamas...", "Xdeterminante.tienda", "Xproducto.inventario") -->
-<!-- arregla_nombres(nombres) -->
-<!-- source('~/.active-rstudio-document', echo=TRUE) -->
-<!-- arregla_nombres(nombres) -->
-<!-- source('~/.active-rstudio-document', echo=TRUE) -->
-<!-- arregla_nombres(nombres) -->
-<!-- nombres <- c("Xcomo.te.llamas...", "Xdeterminante.tienda", "Xproducto.inventario") -->
-<!-- arregla_nombres(nombres) -->
-<!-- arregla_nombre <- function(x) { -->
-<!-- gsub('[.]', ' ', x)) -->
-<!-- } -->
-<!-- source('~/.active-rstudio-document', echo=TRUE) -->
-<!-- source('~/.active-rstudio-document', echo=TRUE) -->
-<!-- nombres[1] -->
-<!-- arregla_nombre(nombres[1]) -->
-<!-- lapply(nombres, arregla_nombre) -->
-<!-- sapply(nombres, arregla_nombre) -->
 
-
-<!-- biblioteca <- read.csv("data/biblioteca.csv", stringsAsFactors = FALSE, -->
-<!--                        colClasses = c(biblioteca_fecha_fundacion='Date', fecha_mod='POSIXct'), -->
-<!--                        check.names = FALSE, fileEncoding = "latin1") -->
-<!-- colnames(biblioteca) -->
-
-<!-- View(biblioteca) -->
-<!-- library(dplyr) -->
-<!-- %>% -->
-<!-- library(tidyverse) -->
-<!-- %>% -->
-<!-- `%>%`` -->
-<!-- `%>%` -->
-<!-- `%>%` -->
-<!-- biblioteca %>% group_by(nom_ent) -->
-<!-- biblioteca %>% group_by(nom_ent) %>% rename(coleccion=biblioteca_numero_coleccion) -->
-<!-- biblioteca %>% group_by(nom_ent) %>% rename(coleccion=biblioteca_numero_coleccion) %>% summarise(tamano_coleccion=mean(coleccion)) -->
-<!-- estadisticas <- list(promedio=mean, desviacion=sd, rango=range) -->
-<!-- biblioteca %>% filter(nom_ent=="Aguascalientes") -->
-<!-- biblioteca %>% filter(nom_ent=="Aguascalientes")$biblioteca_numero_coleccion -->
-<!-- (biblioteca %>% filter(nom_ent=="Aguascalientes"))$biblioteca_numero_coleccion -->
-<!-- colecciones <- (biblioteca %>% filter(nom_ent=="Aguascalientes"))$biblioteca_numero_coleccion -->
-<!-- estadisticas -->
-<!-- lapply(colecciones, estadisticas) -->
-<!-- lapply(colecciones, `*`, 10) -->
-<!-- cacula <- function(x, stats) {} -->
-<!-- cacula <- function(x, stats) { -->
-<!-- resultados <- NULL -->
-<!-- for (e in stats) resultados <- c(resultados, e(x)) -->
-<!-- resultados -->
-<!-- } -->
-<!-- calcula <- function(x, stats) { -->
-<!-- resultados <- NULL -->
-<!-- for (e in stats) resultados <- c(resultados, e(x)) -->
-<!-- resultados -->
-<!-- } -->
-<!-- calcula(colecciones, estadisticas) -->
-<!-- lapply(estadisticas, function (e, x) e(x), colecciones ) -->
-
-
-
-<!-- 3 + 4 -->
-
-<!-- vector <- seq(1, 16) -->
-<!-- matriz <- matrix(vector, ncol=2, byrow=T) -->
-<!-- print(matriz) -->
-
-<!-- 1 / 200 * 30 -->
-<!-- (59 + 73 + 2) / 3 -->
-<!-- sin(pi / 2) -->
-
-<!-- arregla_nombres <- function(x) { -->
-<!--   nombres <- NULL -->
-<!--   for (i in 1:length(x)) { -->
-<!--     nombres <- c(nombres, gsub('[.]', ' ', x[i])) -->
-<!--   } -->
-<!--   return(nombres) -->
-<!-- } -->
-
-<!-- arregla_nombre <- function(x) { -->
-<!--     gsub('[.]', ' ', x) -->
-<!-- } -->
+> TIP: las funciones de la familia *apply transfieren aquellos argumentos que no utilizan a
+> FUN, esto es, a la función que llaman para cada elemento de la lista, vector o dataframe
+> que les pasamos. Como el argumento x=1:100 del código anterior.
 
 ## Ejemplo: integración numérica
 
-La idea detrás de la integración es sencilla, se trata de encontrar el área bajo la curva aproximándola por sus componentes. Las reglas más simples son por punto medio y trapezoide. La regla del punto medio aproxima el área bajo la curva empleando un rectángulo. La regla del trapezoide usa un trapezoide. Cada una toma la función que queremos integrar `f` y el rango de valores, de `a` a `b`. Por ejemplo, la función a integrar puede ser `sen(x)` y el rango, de 0 to $\pi$.
+La idea detrás de la integración es sencilla, se trata de encontrar el área bajo la curva aproximándola por sus componentes. Las reglas más simples son por punto medio y trapecio. La [regla del punto medio](https://es.wikipedia.org/wiki/Integraci%C3%B3n_de_Riemann) aproxima el área bajo la curva empleando un rectángulo. La [regla del trapecio](https://es.wikipedia.org/wiki/Regla_del_trapecio) usa un trapecio. Cada una toma la función que queremos integrar `f` y el rango de valores, de `a` a `b`. Por ejemplo, la función a integrar puede ser `sen(x)` y el rango, de 0 to $\pi$.
 
 ```{r}
 midpoint <- function(f, a, b) {
@@ -193,7 +88,7 @@ midpoint(sin, 0, pi)
 trapezoid(sin, 0, pi)
 ```
 
-
+La aproximación por ambos métodos, pero en el caso de la regla del punto medio, sobreestima el área, mientras que la regla del trapecio la subestima. Para mejorar nuestra aproximación lo mejor será dividir nuestra área en segmentos y aplicar las mismas reglas para estimar el área de rangos más pequeños. Así podemos reducir un poco el error:
 
 ```{r, mid-trap}
 midpoint_composite <- function(f, a, b, n = 10) {
@@ -224,9 +119,9 @@ trapezoid_composite(sin, 0, pi, n = 10)
 trapezoid_composite(sin, 0, pi, n = 100)
 ```
 
+Claramente, la estimación del área es mucho mejor cuando dividimos el rango en segmentos más pequeños. De hecho, ambas reglas dan valores cada vez más cercanos. La siguiente gráfica nos da una buena idea sobre cómo la estimación ofrecida por cada método depende de la cantidad de segmentos en que dividamos el rango:
 
-
-```{r, echo = FALSE, eval = FALSE}
+```{r, echo = FALSE, eval = TRUE}
 mid <- sapply(1:20, function(n) midpoint_composite(sin, 0, pi, n))
 trap <- sapply(1:20, function(n) trapezoid_composite(sin, 0, pi, n))
 
@@ -234,6 +129,7 @@ matplot(cbind(mid, trap),
   xlab = "Number of pieces", ylab = "Estimate of area")
 ```
 
+Si nos fijamos con cuidado en la implementación de ambas reglas es fácil ver que una gran parte del código es prácticamente idéntico, por lo que podríamos definir una nueva función que generalice las partes que ambas funciones tienen en común, de manera que solamente la parte que implementa regla varíe en cada ejecución:
 
 ```{r}
 composite <- function(f, a, b, n = 10, rule) {
@@ -251,6 +147,7 @@ composite(sin, 0, pi, n = 10, rule = midpoint)
 composite(sin, 0, pi, n = 10, rule = trapezoid)
 ```
 
+De hecho, existen otras reglas para estimar el área bajo la curva que funcionan esencialmente de la misma manera, por lo que nuestra función composite puede operar con nuevas reglas, como `simpson()` y `boole()`.
 
 ```{r}
 simpson <- function(f, a, b) {
@@ -269,6 +166,7 @@ composite(sin, 0, pi, n = 10, rule = simpson)
 composite(sin, 0, pi, n = 10, rule = boole)
 ```
 
+En realidad es posible conseguir una mayor abstracción, pues las reglas que hemos utilizado para estimar el área bajo la curva forman parte de una familia de funciones que se llaman [Newton-Cotes](https://es.wikipedia.org/wiki/F%C3%B3rmulas_de_Newton%E2%80%93Cotes), por lo que es posible generarlas modificando ciertos parámetros:
 
 ```{r}
 newton_cotes <- function(coef, open = FALSE) {
@@ -286,3 +184,5 @@ boole <- newton_cotes(c(7, 32, 12, 32, 7))
 milne <- newton_cotes(c(2, -1, 2), open = TRUE)
 composite(sin, 0, pi, n = 10, rule = milne)
 ```
+
+Como ves, parte del paradigma de la programación funcional se basa en generar funciones simples que hagan bien una tarea e integrarlas en procedimientos más generales, abstrayendo aquellos pasos que son redundantes.
