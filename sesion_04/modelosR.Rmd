@@ -2,7 +2,7 @@
 title: "Modelando con R"
 author: "David Suárez <david.suarez@yahoo.com>"
 date: "28 de abril de 2018"
-output: revealjs::revealjs_presentation
+output: html_document
 ---
 
 # Modelación
@@ -37,8 +37,8 @@ La meta de la modelación no es descubrir la verdad, sino obtener una buena apro
 ### Prerequisitos: modelr
 
 ```{r setup, message = FALSE}
-#library(tidyverse)
-library(ggplot2)
+library(tidyverse)
+
 library(modelr)
 options(na.action = na.warn)
 ```
@@ -81,11 +81,76 @@ ggplot(dist1, aes(x1, y)) +
   geom_linerange(aes(ymin = y, ymax = pred), colour = "#3366FF") 
 ```
 
-Para calcular esas funciones, requerimos convertir nuestra familia de modelos en una función:
+Para calcular esas distancias, requerimos convertir nuestra familia de modelos en una función:
 
 ```{r}
 model1 <- function(a, data) {
   a[1] + data$x * a[2]
 }
 model1(c(7, 1.5), sim1)
+```
+
+Una forma de calcular el error de nuestro modelo es estimando la diferencia entre los valores predichos por éste y los datos originales:
+
+```{r}
+sim1$y - model1(c(7, 1.5), sim1)
+```
+
+Para hacer más fácil este procedimiento, podemos crear una función que haga la misma resta. Le pasamos a esta función un vector con los dos parámetros de nuestro modelo y los datos que estamos intentando modelar:
+
+```{r}
+distancia <- function(param, datos) {datos$y-model1(param, datos)}
+
+distancia(c(1,1.5), sim1)
+distancia(c(7,1.5), sim1)
+```
+
+Una forma de comparar los parámetros que generan las menores distancias entre las predicciones y los datos sería usando el dataframe `modelos` que generamos anteriormente al azar:
+
+```{r}
+distancia(unlist(models[1,]), sim1)
+```
+
+Pero incluso mejor sería emplear una malla regular, que explore todo un espacio de datos, dentro del cual pensamos que están las mejores combinaciones de parámetros:
+
+```{r}
+grid <- expand.grid(
+a1 = seq(-5, 5, length = 100),
+a2 = seq(1, 3, length = 100)
+)
+```
+
+Otro cambio conveniente es que para comparar distintos parámetros sería mucho más fácil si las diferencias entre las predicciones y los datos pudieran resumirse en un solo valor. Para esto es muy útil modificar nuestra función de distancia de la siguiente manera:
+
+```{r}
+distancia1 <- function(mod, data) {
+  diff <- data$y - model1(mod, data)
+  sqrt(mean(diff ^ 2))
+}
+```
+Usando esta función es muy fácil agregar una nueva columna a `grid` que contenga las distancias para cada pareja de parámetros:
+```{r}
+grid$dist <- sapply(1:nrow(grid), function(row) sd(distancia(c(grid$a1[row], grid$a2[row]), sim1)))
+```
+
+Ahora, podemos graficar los diez mejores resultados, esto es, aquellos que tienen la menor distancia con respecto a los datos:
+
+```{r}
+ggplot(sim1, aes(x, y)) + geom_abline(aes(intercept = a1, slope = a2, color=dist), data = head(arrange(grid, dist), 10), alpha = 1/4) +   geom_point()
+```
+
+Aunque este procedimiento es correcto, incluso mejor sería aprovechar que en R existe una función `optim` que nos permite optimizar (maximizar o minimizar el resultado de una función):
+
+```{r}
+(best <- optim(c(0, 0), distancia1, data = sim1))
+```
+
+De acuerdo al resultado arrojado por esta función, los mejores valores para nuestros dos parámetros son: `{r}best$par`
+
+Ahora bien, R incluye una función específica para tratar este problema cuando estamos trabajando con modelos lineales, pero para esto necesitamos especificar los modelos usando una sintaxis especial en R, empleando el operador de fórmulas: `~`, así, nuestro modelo se puede especificar simplemente usando la expresión `y ~ x`. `lm()` solamente requiere que especifiquemos el modelo y que le pasemos los datos con respecto a los cuales vamos a ajustar ese modelo:
+
+```{r}
+sim1_mod <- lm(y ~ x, data = sim1)
+coef(sim1_mod)
+summary(sim1_mod)
 ```
