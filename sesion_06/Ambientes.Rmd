@@ -1,0 +1,23 @@
+---
+title: "Ambientes en R"
+author: "David Suárez <david.suarez@yahoo.com>"
+date: "5 de mayo de 2018"
+output: html_document
+---
+
+Function	Description
+assign	Assigns the name x to the object value in the environment envir.
+get	Gets the object associated with the name x in the environment envir.
+exists	Checks that the name x is defined in the environment envir.
+objects	Returns a vector of all names defined in the environment envir.
+remove	Removes the list of objects in the argument list from the environment envir. (List is an unfortunate argument name, especially as the argument needs to be a vector.)
+search	Returns a vector containing the names of attached packages. You can think of this as the search path in which R tries to resolve names. More precisely, it shows the list of chained parent environments.
+searchpaths	Returns a vector containing the paths of attached packages.
+attach	Adds the objects in the list, data frame, or data file what to the current search path.
+detach	Removes the objects in the list, data frame, or data file what from the current search path.
+emptyenv	Returns the empty environment object. All environments chain back to this object.
+parent.env	Returns the parent of environment env.
+baseenv	The environment of the base package.
+globalenv or .GlobalEnv	Returns the environment for the user’s workspace (called the “global environment”). See for an explanation of what this means.
+environment	Returns the environment for function fun. When evaluated with no arguments (or fun=NULL), returns the current environment.
+new.env	Returns a new environment object.
