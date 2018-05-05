@@ -154,3 +154,45 @@ sim1_mod <- lm(y ~ x, data = sim1)
 coef(sim1_mod)
 summary(sim1_mod)
 ```
+
+
+```{r}
+
+
+?data_grid
+grid <- sim1 %>% data_grid(x)
+grid
+View(sim1)
+grid
+grid %>% add_predictions(sim1_mod)
+grid <- grid %>% add_predictions(sim1_mod)
+ggplot(sim1, aes(x, y)) + geom_point()
+ggplot(sim1, aes(x, y)) + geom_point() + geom_point(data=grid, aes(x, pred), color=red)
+ggplot(sim1, aes(x, y)) + geom_point() + geom_point(data=grid, aes(x, pred), color="red")
+ggplot(sim1, aes(x, y)) + geom_point() + geom_point(data=grid, aes(x, pred), color="green")
+grid <- grid %>% add_residuals(sim1_mod)
+?add_residuals
+grid <- sim1 %>% data_grid(x)
+grid <- grid %>% add_residuals(sim1_mod)
+grid <- grid %>% add_residuals(sim1, sim1_mod)
+sim1 %>% add_residuals(sim1_mod)
+View(grid)
+grid <- grid %>% add_predictions(sim1_mod)
+View(grid)
+View(sim1 %>% add_residuals(sim1_mod))
+sim1_red <- sim1 %>% add_residuals(sim1_mod)
+left_join(sim1_red, grid)
+View(sim1_red)
+View(left_join(sim1_red, grid))
+ggplot(sim1, aes(y, pred)) + geom_line()
+ggplot(sim1_red, aes(y, pred)) + geom_line()
+sim1_red <- left_join(sim1_red, grid)
+ggplot(sim1_red, aes(y, pred)) + geom_line()
+ggplot(sim1_red, aes(resid)) + geom_freqpoly(binwidth = 0.5)
+ggplot(sim1, aes(x, resid)) +
+geom_ref_line(h = 0) +
+geom_point()
+ggplot(sim1_red, aes(x, resid)) +
+geom_ref_line(h = 0) +
+geom_point()
+```
