@@ -1,0 +1,165 @@
+---
+title: "Objetos"
+author: "David Suárez"
+date: "12 de mayo de 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+La programación orientada a objetos se basa en algunos conceptos clave, tales como: *clase*, *objeto* o *instancia*, *atributo* o *propiedad*, *método* y *herencia*. En R estos conceptos tienen relevancia, pero funcionan de manera distinta a otros lenguajes. Para empezar, no hay una sola forma de trabajar con objetos en R, sino ¡tres!: **S3**, **S4** y **RC**.
+
+## S3 ##
+
+Además de los objetos base, la implementación más común de objetos en R corresponde a **S3**.
+
+Para saber si un objeto `x` es del tipo **S3** uno tiene que checar que `x` sea, en efecto, un objeto, y que no sea de tipo **S4**:
+
+```{r echo=TRUE}
+is.s3 <- function (o) {is.object(x) & !isS4(x)}
+
+(x <- LETTERS)
+is.s3(x)
+(x <- factor(c('m', 'f', 'f', 'm', NA, 'f')))
+is.s3(x)
+```
+
+Para crear una nueva clase **S3** es necesario manipular los atributos de un objeto base (típicamente una lista, pero también puede funcionar un vector o incluso una función):
+
+```{r}
+(isoceles <- structure(list(sides=c(3,5,5)), class="triangle"))
+
+class(isoceles)
+is.s3(isoceles)
+```
+
+Definir un constructor es tan sencillo como implementar una función que devuelva un objeto con el attributo `class` que haga referencia a la clase:
+
+```{r}
+triangle <- function(sides) {
+  if (!is.numeric(sides) | length(sides) != 3) stop("Sides must be a three-length numeric vector")
+  structure(list(sides=sides), class = "triangle")
+}
+
+(equilatero <- triangle(c(1,1,1)))
+
+class(equilatero)
+```
+
+Algo que caracteriza a **S3** es el empleo de 'funciones genéricas':
+
+```{r}
+print.triangle <- function(t) {
+  print(paste("Triangle:", paste(t$sides, collapse = ", "), sep = " "))
+}
+
+equilatero
+isoceles
+```
+
+Las funciones genéricas son invocadas por los métodos, que son funciones que emplean una llamada a la función `UseMethod()`.
+
+```{r}
+rectangle <- function(sides) {
+  if (!is.numeric(sides) | length(unique(sides)) != 2) stop("Sides must be a four-length numeric vector")
+  structure(list(sides=sides), class = "rectangle")
+}
+
+area <- function(fig) UseMethod("area")
+
+area.rectangle <- function(r) {
+  with(r, prod(unique(sides)))
+}
+
+area.triangle <- function(t) {
+  with(t, sqrt(prod(sum(t$sides)/2, sum(t$sides)/2-t$sides)))
+}
+
+(cuadrado <- rectangle(c(3,5,3,5)))
+
+area(cuadrado)
+area(isoceles)
+area(equilatero)
+```
+
+Es posible revisar los métodos disponibles para una función genérica empleando la función `methods()`. Esta misma función nos permite revisar los métodos definidos para una clase dada:
+
+```{r}
+methods(area)
+
+methods(class="triangle")
+```
+
+## S4 ##
+
+Los objetos en **S4** son un poco más parecidos a los objetos en otros lenguajes de programación.
+
+```{r}
+setClass("Person",
+  slots = list(name = "character", age = "numeric"))
+
+setClass("Employee",
+  slots = list(boss = "Person"),
+  contains = "Person")
+
+alice <- new("Person", name = "Alice", age = 40)
+john <- new("Employee", name = "John", age = 20, boss = alice)
+```
+
+Para acceder a los miembros de un objeto se emplea el operador `@`:
+
+```{r}
+alice@age
+
+slot(john, "boss")
+```
+
+Los métodos en **S4** funcionan de forma muy parecida a los de **S3**, empleando funciones genéricas, pero con la diferencia de que pueden elegir qué método invocar dependiendo de las clases de los argumentos:
+
+```{r}
+df <- data.frame(x=runif(26), y=letters)
+
+try(sort(df))
+
+isS4(sort)
+
+setGeneric("sort")
+
+isS4(sort)
+
+setMethod("sort",
+  c(x = "data.frame"),
+  function(x) {
+    x[order(x[,1]),]
+  }
+)
+
+sort(df)
+
+showMethods(sort)
+```
+
+## RC ##
+
+A diferencia de **S3** y **S4** que emplean una orientación a objetos de tipo funcional, **RC** emplea objetos encapsulados. Las clases en **RC** se definen empleando la función `setRefClass()`:
+
+```{r}
+Account <- setRefClass("Account",
+  fields = list(balance = "numeric"),
+  methods = list(
+    withdraw = function(x) {
+      balance <<- balance - x
+    },
+    deposit = function(x) {
+      balance <<- balance + x
+    }
+  )
+)
+
+(a <- Account$new(balance = 100))
+a$balance
+a$deposit(100)
+a$balance
+```

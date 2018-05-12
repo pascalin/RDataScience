@@ -127,7 +127,7 @@ ggplot(diamonds2, aes(carat, price)) +
   geom_line(data = grid, colour = "red", size = 1)
 ```
 
-Esta gráfica nos muestra algunas cuestiones interesantes sobre los datos.That tells us something interesting about our data. Los diamantes grandes parecieran ser muco más baratos que lo que indica el model.
+Esta gráfica nos muestra algunas cuestiones interesantes sobre los datos. Los diamantes grandes parecieran ser mucho más baratos que lo que indica el model.
 
 Ahora, fijémonos en los residuos:
 
