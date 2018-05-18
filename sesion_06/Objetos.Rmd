@@ -18,7 +18,7 @@ Además de los objetos base, la implementación más común de objetos en R corr
 Para saber si un objeto `x` es del tipo **S3** uno tiene que checar que `x` sea, en efecto, un objeto, y que no sea de tipo **S4**:
 
 ```{r echo=TRUE}
-is.s3 <- function (o) {is.object(x) & !isS4(x)}
+is.s3 <- function (o) {is.object(o) & !isS4(o)}
 
 (x <- LETTERS)
 is.s3(x)
@@ -29,7 +29,7 @@ is.s3(x)
 Para crear una nueva clase **S3** es necesario manipular los atributos de un objeto base (típicamente una lista, pero también puede funcionar un vector o incluso una función):
 
 ```{r}
-(isoceles <- structure(list(sides=c(3,5,5)), class="triangle"))
+(isoceles <- structure(list(sides=c(3,5,5)), class=c("triangle", "figure")))
 
 class(isoceles)
 is.s3(isoceles)
@@ -40,7 +40,7 @@ Definir un constructor es tan sencillo como implementar una función que devuelv
 ```{r}
 triangle <- function(sides) {
   if (!is.numeric(sides) | length(sides) != 3) stop("Sides must be a three-length numeric vector")
-  structure(list(sides=sides), class = "triangle")
+  structure(list(sides=sides), class = c("triangle", "figure"))
 }
 
 (equilatero <- triangle(c(1,1,1)))
@@ -48,7 +48,7 @@ triangle <- function(sides) {
 class(equilatero)
 ```
 
-Algo que caracteriza a **S3** es el empleo de 'funciones genéricas':
+Algo que caracteriza a **S3** es el empleo de métodos específicos para cada clase de objetos:
 
 ```{r}
 print.triangle <- function(t) {
@@ -59,12 +59,12 @@ equilatero
 isoceles
 ```
 
-Las funciones genéricas son invocadas por los métodos, que son funciones que emplean una llamada a la función `UseMethod()`.
+Los métodos son invocados por 'funciones genéricas', que son funciones cuya definición emplea una llamada a la función `UseMethod()`.
 
 ```{r}
 rectangle <- function(sides) {
   if (!is.numeric(sides) | length(unique(sides)) != 2) stop("Sides must be a four-length numeric vector")
-  structure(list(sides=sides), class = "rectangle")
+  structure(list(sides=sides), class = c("rectangle", "figure"))
 }
 
 area <- function(fig) UseMethod("area")
@@ -77,11 +77,16 @@ area.triangle <- function(t) {
   with(t, sqrt(prod(sum(t$sides)/2, sum(t$sides)/2-t$sides)))
 }
 
+area.default <- function(x) {
+  stop(paste("I don't know how to calculate area for objects of class", class(x)))
+}
+
 (cuadrado <- rectangle(c(3,5,3,5)))
 
 area(cuadrado)
 area(isoceles)
 area(equilatero)
+#area(1:3)
 ```
 
 Es posible revisar los métodos disponibles para una función genérica empleando la función `methods()`. Esta misma función nos permite revisar los métodos definidos para una clase dada:
@@ -94,7 +99,7 @@ methods(class="triangle")
 
 ## S4 ##
 
-Los objetos en **S4** son un poco más parecidos a los objetos en otros lenguajes de programación.
+Los objetos en **S4** se basan en la existencia de funciones genéricas, pero ofrecen un mayor control sobre las características de la clase y también un poco más de flexibilidad con respecto a la forma en que se determina el método indicado para una función genérica.
 
 ```{r}
 setClass("Person",
@@ -116,7 +121,7 @@ alice@age
 slot(john, "boss")
 ```
 
-Los métodos en **S4** funcionan de forma muy parecida a los de **S3**, empleando funciones genéricas, pero con la diferencia de que pueden elegir qué método invocar dependiendo de las clases de los argumentos:
+Los métodos en **S4** funcionan de forma muy parecida a los de **S3**, empleando funciones genéricas, pero con la diferencia de que pueden elegir qué método invocar dependiendo de las clases de cada uno de los argumentos y no sólo del primero:
 
 ```{r}
 df <- data.frame(x=runif(26), y=letters)
@@ -163,3 +168,5 @@ a$balance
 a$deposit(100)
 a$balance
 ```
+
+Los clases de **RC** emplean objetos 'environment' para implementar la mutabilidad y escapar así del comportamiento por defecto de **R**, que crea una copia de un objeto en la memoria cuando éste se modifica.
