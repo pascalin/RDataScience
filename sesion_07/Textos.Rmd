@@ -1,0 +1,229 @@
+---
+title: "Trabajando con textos en R"
+author: "David Suárez"
+date: "May 19, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introducción de textos en R
+
+La unidad de datos textuales en R es el vector de caracteres:
+
+```{r}
+texto1 <- "Hola Mundo"
+
+texto2 <- 'Hola México'
+
+texto3 <- "Hola M\\xc3\\xa9xico"
+```
+
+La clase de estos objetos, tanto si se definen empleando comillas simples, como comillas dobles será la misma:
+
+```{r}
+class(texto1)
+```
+
+Si el texto en cuestión fue introducido a través de la consola, su codificación será interpretada como la definida por el sistema, a menos que R detecte un carácter especial (no codificable en ASCII), en cuyo caso la marcará como "UTF8". Si bien esto ocurre así en el caso de la consola, el comportamiento es distinto en el caso de los scripts o de los cuadernos de RMarkDown, puesto que en estos últimos se tiene que establecer de antemano la codificación del documento.
+
+```{r}
+Encoding(c(texto1, texto2, texto3))
+```
+
+Si ya se sabe cuál es la codificación del texto en un archivo o conexión, lo más fácil es indicarle a las funciones de R, como `read.csv` que nuestros datos vienen codificados como "latin1" o "utf8" (con `encoding=`). Si los datos están codificados usando otro sistema, será mejor emplear `fileEncoding=` para que R convierta los datos a 'utf8', o uno puede hacer explícitamente la conversión con `iconv()`.
+
+```{r}
+(saludos1 <- read.csv("saludos.csv", encoding = "latin1", stringsAsFactors = FALSE))
+Encoding(unlist(saludos1[2,]))
+(saludos2 <- read.csv("saludos.csv", fileEncoding = "latin1", stringsAsFactors = FALSE))
+Encoding(unlist(saludos2[2,]))
+```
+
+R soporta tres codificaciones para el texto, 'utf8', 'latin1' y 'bytes'. El primero es el más común, pues es parte de [Unicode](https://es.wikipedia.org/wiki/Unicode) y, como tal, puede usarse para codificar cadenas que contienen cualquiera de los caracteres definidos en Unicode. Latin1 es una codificación equivalente a los 127 caracteres de ASCII, más un conjunto de caracteres extendidos que incluye la mayor parte de los signos empleados en las lenguas romances. Bytes es una codificación equivalente a ASCII, que asume que la cadena ya fue codificada, pero no intenta interpretarla.
+
+Si nuestra cadena está marcada en R con codificación "unknown", una manera de verificar cómo está codificada internamente es marcarla como "bytes", usando la función `Encoding<-()`:
+
+```{r}
+Encoding(saludos2[[2,2]]) <- "bytes"
+
+saludos2
+
+Encoding(saludos1[[2,2]]) <- "bytes"
+
+saludos1
+
+```
+
+En este caso, como el ambiente local está configurado para usar 'utf8', la cadena no aparece marcada. Sin embargo, cuando examinamos la codificación interna del carácter 'é' en `saludos2`, vemos que R está empleando dos bytes para almacenar ese signo, lo cual es una indicación de que, en efecto, la cadena se leyó correctamente. En cambio, el mismo signo en `saludos1` está codificado empleando un solo caracter, por lo que también es claro que se codificó correctamente, empleando la codificación "latin1".
+
+Finalmente, además de la consola y los scripts, otra forma de crear texto en R es haciendo coerción a partir de objetos de clases distintas:
+
+```{r}
+as.character(seq(from=0, to=10, by=0.5))
+```
+
+## Manipulación de textos
+
+Para manipular este tipo de datos en R existe una gran cantidad de funciones. Algunas de las más usadas son las que se describen a continuación:
+
+|Función|Sintaxis|Tarea|
+|-------|-----|--------|
+|**paste**|`paste (..., sep = " ", collapse = NULL)`|Pega los contenidos de dos o más vectores de texto entre sí, usando un separador|
+|**paste0**|`paste0(..., collapse = NULL)`|Equivalente a `paste`, pero un poco más rápida al no usar un separador|
+|**nchar**|`nchar(x, type = "chars", allowNA = FALSE, keepNA = NA)`|Cuenta los caracteres, bytes, o el ancho de la cadena recibida|
+|**nzchar**|`nzchar(x, keepNA = FALSE)`|Devuelve un vector lógico indicando si las cadenas no son vacías|
+|**substr**|`substr(x, start, stop)`|Extrae (o reemplaza) una subcadena|
+|**chartr**|`chartr(old, new, x)`|Reemplaza cada caracter de `old` con el caracter correspondiente de `new` en cada elemento del vector de caracteres|
+|**tolower**|`tolower(x)`|Convierte cada elemento de un vector de caracteres a minúsculas|
+|**toupper**|`toupper(x)`|Convierte cada elemento de un vector de caracteres a mayúsculas|
+|**strsplit**|`strsplit(x, split, fixed = FALSE, perl = FALSE, useBytes = FALSE)`|Divide una cadena en caracteres (si `split=NULL`) o en subcadenas, dependiendo del valor de `split=`|
+|**sub** y **gsub**|`gsub/sub(pattern, replacement, x, ignore.case = FALSE, perl = FALSE, fixed = FALSE, useBytes = FALSE)`|Reemplazan un patrón en la cadena dada, con el reemplazo indicado|
+|**grep** y **grepl**|`grep(pattern, x, ignore.case = FALSE, perl = FALSE, value = FALSE, fixed = FALSE, useBytes = FALSE, invert = FALSE)`|`grep` devuelve los índices de los elementos de `x` que coincidieron con el patrón, o los valores que coincidieron con el patrón, si el argumento `value` es TRUE. `grepl` devuelve un vector lógico indicando si el elemento coincidió o no con el patrón|
+|**regexpr**, **gregexpr** y **regexec**|`regexpr(pattern, text, ignore.case = FALSE, perl = FALSE, fixed = FALSE, useBytes = FALSE)`|Estas funciones devuelven la(s) posición(es) en las que coincidió el patrón, o el valor -1 si no coincidió|
+
+Nota: Las funciones `strsplit`, `sub`, `gsub`, `grep`, `grepl`, `regexpr`, `gregexpr` y `regexec` interpretan el patrón como una 'expresión regular' siempre que el valor del argumento `fixed` evalue como falso.
+
+Si volvemos a leer el archivo con los saludos, podemos ver cómo trabajan las funciones listadas:
+
+```{r}
+(saludos1 <- read.csv("saludos.csv", encoding = "latin1", stringsAsFactors = FALSE))
+# Aquí usamos paste0 para darle forma a los saludos en cada idioma
+data.frame(lapply(saludos1, paste0, collapse=" "), stringsAsFactors = F)
+
+# nchar nos permite calcular la longitud de cada cadena
+data.frame(lapply(saludos1, nchar))
+
+# substr nos permite extraer los primeros 3 caracteres de cada cadena
+data.frame(lapply(saludos1, substr, 1, 3))
+
+# chartr nos permite cifrar nuestras contraseñas
+(passwd <- chartr("aeiou", "23109", c('super','contraseña')))
+
+# substr también nos permite reemplazar una subcadena
+substr(passwd, 1, 1) <- "@"
+passwd
+
+# Con strsplit podemos separar una cadena en sus caracteres, o donde ocurra una cierta secuencia
+ggg <- c("Guantanamera", "guajira", "guantanamera", "azúcar")
+strsplit(ggg, split = "")
+(fff <- do.call(paste, c(as.list(ggg), sep=", ")))
+strsplit(fff, split = ", ")
+
+# sub y gsub reemplazan una cierta secuencia con otra, sub solamente hace un reemplazo, mientras que gsub hace un reemplazo por cada ocurrencia del patrón
+sub("a", "_", ggg)
+gsub("a", ".", ggg)
+
+# grep y grepl nos permiten saber si un patrón ocurre en los elementos de un vector
+grep("era", ggg)
+grepl("era", ggg)
+
+# regexpr y gregexpr interpretan una expresión regular y nos permiten saber en qué parte de la cadena ocurre.
+fff
+regexpr("[tnmr][ae]", fff)
+gregexpr("[tnmr][ae]", fff)
+```
+
+## stringr
+
+La biblioteca `stringr` contiene varias funciones que, aunque equiparables con las funciones de la biblioteca `base`, tienen nombres más consistentes y algunas operaciones extra.
+
+### Expresiones regulares
+
+Una expresión regular es, esencialmente, un patrón o máscara, que permite operar con cadenas que varían, pero que cumplen con ciertas regularidades.
+
+```{r}
+library(stringr)
+
+str_view(ggg, "[tnmr][ae]")
+str_view_all(ggg, "[tnmr][ae]")
+```
+
+Las funciones de `stringr` comienzan con 'str_' y operan, por defecto, con expresiones regulares. Podría plantearse una especie de equivalencia entre las funciones de __stringr__ y las de R __base__, como se sugiere en la siguiente tabla:
+
+| R base | stringr | Utilidad |
+|--------|---------|-------|
+| nchar | str_length | |
+| paste | str_c | |
+| substr | str_sub | |
+| tolower | str_to_lower | |
+| toupper | str_to_upper | |
+| | str_to_title | Convierte A Mayúsculas La Primera Letra De Cada Palabra |
+| grepl | str_detect | |
+| | str_subset | Filtra, de un vector, solamente aquellos elementos que coinciden con el patrón |
+| | str_count | Regresa el número de coincidencias del patrón para cada elemento del vector |
+| regexpr | str_locate | |
+| gregexpr | str_locate_all | |
+| | str_extract | Devuelve el valor de la primera coincidencia |
+| | str_extract_all | Devuelve todas las coincidencias |
+| | str_match | Devuelve la coincidencia completa y además los valores de cada uno de los subgrupos |
+| | str_match_all | Igual que str_match pero devuelve no solamente la primera coincidencia, sino todas |
+| sub | str_replace |
+| gsub | str_replace_all |
+| strsplit | str_split |
+
+```{r}
+# str_subset nos permite obtener muy fácilmente sólo aquellos elementos que coincidan con el patrón
+ggg %>% str_subset("jira")
+ggg %>% str_subset("gua")
+
+# str_count nos permite saber cuántas coincidencias hay del patrón en cada elemento del vector
+ggg %>% str_count(regex("[aeiou]", ignore_case = TRUE))
+
+# str_extract regresa el valor del texto que coincide con el patrón
+col_pat <- regex(paste(colors(), collapse="|"), ignore_case = TRUE)
+stringr::sentences %>% str_subset(col_pat) %>% str_extract(col_pat)
+stringr::words %>% str_extract("wh.+") %>% .[!is.na(.)]
+
+# str_match especifica de forma detallada las coincidencias del patrón
+stringr::sentences %>% str_match(regex("([a-z]{3,})\\s+([a-z]+)\\s+\\1", ignore_case = TRUE))
+```
+
+## Web Scraping
+
+Una forma muy popular para obtener datos principalmente textuales es a partir de las páginas web, pues éstas ofrecen información semiestructurada, que es de fácil acceso a través de una conexión a Internet.
+
+Es posible conseguir información muy útil empleando simplemente una biblioteca como __Rcurl__ y las técnicas para manipulación de texto que acabamos de revisar. Así, es posible convertir el registro de cambios de R, que se encuentra en la siguiente dirección [http://developer.r-project.org/R_svnlog_2017](http://developer.r-project.org/R_svnlog_2017) en información estructurada:
+
+```{r}
+library(RCurl)
+library(ggplot2)
+
+rlog_url <- "http://developer.r-project.org/R_svnlog_2017"
+if(url.exists(rlog_url)) {
+  rlog <- getURL(rlog_url) %>% .[[1]] %>% str_split("\n") %>% .[[1]] %>% str_subset("^r\\d{2,}\\s+\\|") %>% str_replace("(\\d+) lines?", "\\1") %>% str_replace("^r(\\d{2,})", "\\1") %>% str_replace("(\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\s+[+-]\\d{4})[^|]+", "\\1")
+rlog_df <- read.delim(header = FALSE, sep="|", text=rlog, col.names = c("revision", "contributor", "date", "lines"), colClasses = c(revision='integer', contributor='factor', date='POSIXct', lines='integer'))
+
+library(dplyr)
+contributions <- rlog_df %>% group_by(contributor) %>% summarise(contribution=sum(lines))
+barplot(contributions$contribution, names.arg = contributions$contributor)
+
+ggplot(rlog_df, mapping = aes(x=date, y=lines)) +
+  geom_smooth()
+}
+```
+
+Pero también es posible utilizar la naturaleza semiestructurada de las páginas web para obtener ciertos conjuntos de datos a través de bibliotecas especializadas en *web scraping* como __rvest__:
+
+```
+#Sys.setenv(CURL_CA_BUNDLE = file.path(Sys.getenv("R_HOME"), "lib/microsoft-r-cacert.pem"))
+library(rvest)
+
+lego_movie <- read_html("http://www.imdb.com/title/tt1490017/")
+
+lego_movie %>%
+  html_node("strong span") %>%
+  html_text() %>%
+  as.numeric()
+
+lego_movie %>%
+  html_nodes("#titleCast .itemprop span") %>%
+  html_text()
+
+lego_movie %>%
+  html_nodes("table") %>%
+  .[[3]] %>%
+  html_table()
+```

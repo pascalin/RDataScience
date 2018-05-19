@@ -1,0 +1,29 @@
+---
+title: "Clasificación y Machine Learning"
+author: "David Suárez"
+date: "May 12, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Métodos para clasificar ##
+
+| Modelo | Tarea | Metodo(s) |
+|-------|------|
+| **Algoritmos de aprendizaje supervisado** |
+| Nearest Neighbor | Clasificación |
+| naive Bayes | Clasificación |
+| Decision Trees | Clasificación |
+| Clasificación Rule Learners | Clasificación |
+| Linear Regression | Predicción númerica |
+| Regression Trees | Predicción númerica |
+| Model Trees | Predicción númerica |
+| Neural Networks | Uso dual |
+| Support Vector Machines | Uso dual |
+| **Algoritmos de aprendizaje no supevisado** |
+| Association Rules | Detección de patrones |
+| k-means Clustering | Clustering |
+
