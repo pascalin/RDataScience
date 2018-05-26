@@ -245,10 +245,10 @@ Para ejemplificar el uso de R para analizar texto obtenido de Internet, usaremos
 library(twitteR)
 
 setup_twitter_oauth(
-      'consumer_key' = 'xxx',
-      'consumer_secret' = 'xxx',
-      'access_token' = 'xxx',
-      'access_secret' = 'xxx'
+      'consumer_key' = '5g8P4TKhbJ7NHKYcCukkl1h7h',
+      'consumer_secret' = '2HOASNshyHP0JnWocQgjKYkXf6pvAyQfGYv9F6pTU7jxXrzTD5',
+      'access_token' = '9260282-OjVcfd74kycLmCKa9WX9rvwTzDhkLzBLXc0DOtiwqg',
+      'access_secret' = 'YZtsKzffestyvIxuuJYPTMLrSEYW29rTrEiZ0J6j0Oemp'
 )
 
 tweets <- searchTwitter("Anaya OR Meade OR AMLO OR Bronco OR Zavala", lang="es", n=1000, retryOnRateLimit = 100, since = "2018-05-01")
@@ -263,7 +263,7 @@ limpia_tweets <- function(tweet) {
     str_to_lower(locale="es") %>%
     str_replace_all('@\\w+', '') %>% str_replace_all('[[:punct:]]', '') %>%
     str_replace_all('[[:digit:]]', '') %>% str_replace_all('http\\w+', '') %>%
-    str_replace_all('[ \t]{2,}', '') %>%  str_replace_all('^\\s+|\\s+$', '') %>%
+    str_replace_all('[ \t\n]{2,}', ' ') %>%  str_replace_all('^\\s+|\\s+$', '') %>%
     str_replace_all('([^rl])\\1{1,}', '\\1')
 }
 
@@ -275,13 +275,18 @@ Ya que tenemos los tweets que queremos analizar, utilizaremos el paquete `syuzhe
 ```{r}
 library(syuzhet)
 
-tweet_df %>% arrange(desc(retweetCount)) %>% head(1) %>% .$text %>% get_tokens() %>% get_sentiment(method="nrc", lang="spanish") %>% summary()
+tweet_df[round(runif(1)*1000),]$text %>% get_tokens() %>% 
+  get_nrc_sentiment(lang="spanish")
+tweet_df[round(runif(1)*1000),]$text %>% get_tokens() %>%
+  get_sentiment(method="nrc", lang="spanish")
+#tweet_df %>% arrange(desc(retweetCount)) %>% head(1) %>% .$text %>% get_tokens() %>% get_sentiment(method="nrc", lang="spanish") %>% summary()
 
 analiza_tweets <- function(tweet, ...) {
   candidates <- c('amlo', 'anaya', 'meade', 'bronco', 'zavala')
   tokens <- get_tokens(tweet)
   vote <- tryCatch(
-    switch(intersect(get_tokens(tweet_df$text[round(runif(1)*1000)]), candidates),
+#    switch(intersect(get_tokens(tweet_df$text[round(runif(1)*1000)]), candidates),
+        switch(intersect(get_tokens(tweet), candidates),
            amlo='AMLO',
            meade='Meade',
            anaya='Anaya',
@@ -291,13 +296,14 @@ analiza_tweets <- function(tweet, ...) {
     error=function(e) {NA})
   sentiments <- get_sentiment(tokens, ...)
   valence <- mean(sentiments)
-  list(vote=vote, val=valence)
+  sentiment <- sum(sentiments)
+  list(vote=vote, val=valence, sent=sentiment)
 }
 
 sentiments <- lapply(tweet_df$text, analiza_tweets, method="nrc", lang="spanish")
 
 tweet_sent <- cbind(tweet_df,
-                  setNames(do.call(rbind.data.frame, sentiments), c('vote', 'val')))
+                  setNames(do.call(rbind.data.frame, sentiments), c('vote', 'val', 'sent')))
 
 library(ggplot2)
 tweet_sent %>% ggplot(aes(x=val, fill=vote)) + geom_histogram() + facet_grid(. ~ vote)
@@ -306,11 +312,55 @@ tweet_sent %>% ggplot(aes(x=val, fill=vote)) + geom_histogram() + facet_grid(. ~
 Además de los sentimientos, el método NRC permite examinar 8 emociones vinculadas a cada una de las palabras de este catálogo:
 
 ```{r}
-emotions <- get_nrc_sentiment(tweet_df$text)
+emotions <- get_nrc_sentiment(tweet_df$text, lang="spanish")
 
 tweet_emo <- cbind(tweet_df, emotions, vote=tweet_sent$vote)
 ```
 
+### Examinando los terminos que arroja la búsqueda
+
+```{r}
+library(tm)
+
+todo = c(
+paste(tweets_emo$Text[tweets_emo$anger > 0], collapse=" "),
+paste(tweets_emo$Text[tweets_emo$anticipation > 0], collapse=" "),
+paste(tweets_emo$Text[tweets_emo$disgust > 0], collapse=" "),
+paste(tweets_emo$Text[tweets_emo$fear > 0], collapse=" "),
+paste(tweets_emo$Text[tweets_emo$joy > 0], collapse=" "),
+paste(tweets_emo$Text[tweets_emo$sadness > 0], collapse=" "),
+paste(tweets_emo$Text[tweets_emo$surprise > 0], collapse=" "),
+paste(tweets_emo$Text[tweets_emo$trust > 0], collapse=" ")
+)
+
+# limpiar el texto
+#all = clean.text(all)
+# remove stop-words
+# adding extra domain specific stop words
+todo = removeWords(todo, c(stopwords("spanish")))
+#
+# create corpus
+corpus = Corpus(VectorSource(todo))
+#
+# create term-document matrix
+tdm = TermDocumentMatrix(corpus)
+#
+# convert as matrix
+tdm = as.matrix(tdm)
+#
+# add column names
+colnames(tdm) = c('anger', 'anticipation', 'disgust', 'fear', 'joy', 'sadness', 'surprise', 'trust')
+#
+# Plot comparison wordcloud
+layout(matrix(c(1, 2), nrow=2), heights=c(1, 4))
+par(mar=rep(0, 4))
+plot.new()
+text(x=0.5, y=0.5, 'Emotion Comparison Word Cloud')
+comparison.cloud(tdm, random.order=FALSE,
+colors = c("#00B2FF", "red", "#FF0099", "#6600CC", "green", "orange", "blue", "brown"),
+title.size=1.5, max.words=250)
+ 
+```
 
 ### Visualizando otros métodos de análisis de sentimientos de forma interactiva
 
@@ -352,3 +402,4 @@ stopCluster(cl)
 
 tweet_methods %>% mutate(created=with_tz(created, tzone="America/Mexico_City")) %>% ggvis(x=~created, y=input_select(methods_sent, map=as.name), stroke:=input_select(colors())) %>% layer_lines()
 ```
+
