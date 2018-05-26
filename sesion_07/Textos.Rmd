@@ -93,8 +93,13 @@ Si volvemos a leer el archivo con los saludos, podemos ver cómo trabajan las fu
 # Aquí usamos paste0 para darle forma a los saludos en cada idioma
 data.frame(lapply(saludos1, paste0, collapse=" "), stringsAsFactors = F)
 
+# Otro ejemplo con paste0
+writeLines(paste0(c("<tr class='impar'><td>", "<tr class='par'><td>"),1:26, ":", letters, "</td></tr>", collapse="\n"))
+
 # nchar nos permite calcular la longitud de cada cadena
-data.frame(lapply(saludos1, nchar))
+(cuentas <- data.frame(lapply(saludos1, nchar)))
+
+paste(cuentas$English, cuentas$Español, cuentas$German, cuentas$French, sep=" * ")
 
 # substr nos permite extraer los primeros 3 caracteres de cada cadena
 data.frame(lapply(saludos1, substr, 1, 3))
@@ -109,6 +114,8 @@ passwd
 # Con strsplit podemos separar una cadena en sus caracteres, o donde ocurra una cierta secuencia
 ggg <- c("Guantanamera", "guajira", "guantanamera", "azúcar")
 strsplit(ggg, split = "")
+
+# La siguiente expresión sería equivalente a paste("Guantanamera", "guajira", "guantanamera", "azúcar", sep=", ")
 (fff <- do.call(paste, c(as.list(ggg), sep=", ")))
 strsplit(fff, split = ", ")
 
@@ -226,4 +233,122 @@ lego_movie %>%
   html_nodes("table") %>%
   .[[3]] %>%
   html_table()
+```
+
+## Twitter y análisis de sentimientos
+
+Para ejemplificar el uso de R para analizar texto obtenido de Internet, usaremos RTwitter para analizar los sentimientos expresados por los usarios con respecto a las elecciones en México en el periodo electoral de 2018. Utilizaremos dos paquetes para esto: `twitteR` y `syuzhet`.
+
+```{r}
+#options(RCurlOptions=list(cainfo=system.file('CurlSSL', 'cacert.pem', packages='RCurl')))
+
+library(twitteR)
+
+setup_twitter_oauth(
+      'consumer_key' = 'xxx',
+      'consumer_secret' = 'xxx',
+      'access_token' = 'xxx',
+      'access_secret' = 'xxx'
+)
+
+tweets <- searchTwitter("Anaya OR Meade OR AMLO OR Bronco OR Zavala", lang="es", n=1000, retryOnRateLimit = 100, since = "2018-05-01")
+tweet_df <- twListToDF(tweets)
+
+str(tweet_df)
+
+limpia_tweets <- function(tweet) {
+  # quita varios elementos de los tweets
+  tweet %>%
+    str_replace_all('(RT|via)((?:\\b\\W*@\\w+)+)', '') %>%
+    str_to_lower(locale="es") %>%
+    str_replace_all('@\\w+', '') %>% str_replace_all('[[:punct:]]', '') %>%
+    str_replace_all('[[:digit:]]', '') %>% str_replace_all('http\\w+', '') %>%
+    str_replace_all('[ \t]{2,}', '') %>%  str_replace_all('^\\s+|\\s+$', '') %>%
+    str_replace_all('([^rl])\\1{1,}', '\\1')
+}
+
+tweet_df <- tweet_df %>% mutate(text=limpia_tweets(text))
+```
+
+Ya que tenemos los tweets que queremos analizar, utilizaremos el paquete `syuzhet`para examinar los sentimientos (positivos o negativos) que se relacionan con las palabras empleadas en esos mensajes:
+
+```{r}
+library(syuzhet)
+
+tweet_df %>% arrange(desc(retweetCount)) %>% head(1) %>% .$text %>% get_tokens() %>% get_sentiment(method="nrc", lang="spanish") %>% summary()
+
+analiza_tweets <- function(tweet, ...) {
+  candidates <- c('amlo', 'anaya', 'meade', 'bronco', 'zavala')
+  tokens <- get_tokens(tweet)
+  vote <- tryCatch(
+    switch(intersect(get_tokens(tweet_df$text[round(runif(1)*1000)]), candidates),
+           amlo='AMLO',
+           meade='Meade',
+           anaya='Anaya',
+           bronco='Other',
+           zavala='Other',
+           NA),
+    error=function(e) {NA})
+  sentiments <- get_sentiment(tokens, ...)
+  valence <- mean(sentiments)
+  list(vote=vote, val=valence)
+}
+
+sentiments <- lapply(tweet_df$text, analiza_tweets, method="nrc", lang="spanish")
+
+tweet_sent <- cbind(tweet_df,
+                  setNames(do.call(rbind.data.frame, sentiments), c('vote', 'val')))
+
+library(ggplot2)
+tweet_sent %>% ggplot(aes(x=val, fill=vote)) + geom_histogram() + facet_grid(. ~ vote)
+```
+
+Además de los sentimientos, el método NRC permite examinar 8 emociones vinculadas a cada una de las palabras de este catálogo:
+
+```{r}
+emotions <- get_nrc_sentiment(tweet_df$text)
+
+tweet_emo <- cbind(tweet_df, emotions, vote=tweet_sent$vote)
+```
+
+
+### Visualizando otros métodos de análisis de sentimientos de forma interactiva
+
+```{r}
+library(ggvis)
+library(parallel)
+
+analiza_sent <- function(tweets, method, lang="spanish") {
+  sapply(tweets, function(t) {
+    mean(get_sentiment(get_tokens(t), method=method, lang=lang, cl=cl), na.rm = TRUE)
+  })
+}
+
+analiza_voto <- function(tweet) {
+  candidates <- c('amlo', 'anaya', 'meade', 'bronco', 'zavala')
+  tokens <- get_tokens(tweet)
+  vote <- tryCatch(
+    switch(intersect(get_tokens(tweet_df$text[round(runif(1)*1000)]), candidates),
+           amlo='AMLO',
+           meade='Meade',
+           anaya='Anaya',
+           bronco='Other',
+           zavala='Other',
+           NA),
+    error=function(e) {NA})
+  c(vote=vote)
+}
+
+methods_sent <- c("syuzhet", "bing", "afinn", "nrc")#, "stanford")
+
+#sentiments <- lapply(methods_sent, analiza_sent, method=method, lang="spanish")
+
+cl <- makeCluster(detectCores()-1)
+clusterExport(cl = cl, c("get_sentiment", "get_sent_values", "get_nrc_sentiment", "get_nrc_values", "parLapply"))
+
+tweet_methods <- tweet_df %>% mutate(syuzhet=analiza_sent(text, "syuzhet"), bing=analiza_sent(text, "bing"), afinn=analiza_sent(text, "afinn"), nrc=analiza_sent(text, "nrc"))#, stanford=analiza_sent(text, "stanford"))
+
+stopCluster(cl)
+
+tweet_methods %>% mutate(created=with_tz(created, tzone="America/Mexico_City")) %>% ggvis(x=~created, y=input_select(methods_sent, map=as.name), stroke:=input_select(colors())) %>% layer_lines()
 ```
