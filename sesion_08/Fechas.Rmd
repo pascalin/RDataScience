@@ -1,0 +1,227 @@
+---
+title: "Fechas con lubridate"
+author: "David Suárez"
+date: "May 26, 2018"
+output: html_notebook
+---
+
+```{r setup, message = FALSE}
+library(tidyverse)
+
+library(lubridate)
+```
+
+```{r}
+today()
+now()
+```
+
+### Creando objetos que representan fechas
+
+```{r}
+ymd("2017-01-31")
+mdy("January 31st, 2017")
+dmy("31-Jan-2017")
+```
+
+
+```{r}
+ymd(20170131)
+```
+
+
+```{r}
+ymd_hms("2017-01-31 20:11:59")
+mdy_hm("01/31/2017 08:01")
+```
+
+```{r}
+ymd(20170131, tz = "UTC")
+```
+
+### Creando fechas a partir de sus componentes individuales
+
+```{r}
+year <- 2018
+month <- 5
+day <- 26
+hour <- 8
+minute <- 2
+
+make_date(year, month, day)
+made_datetime(year, month, day, hour, minute))
+```
+
+### Coerción
+
+```{r}
+as_datetime(today())
+as_date(now())
+```
+
+Estas funciones también reciben tiempos y fechas de UNIX:
+
+```{r}
+as_datetime(60 * 60 * 10)
+as_date(365 * 10 + 2)
+```
+
+## Componentes
+
+| Función | Tarea |
+|---------|-------|
+| `year()` | Devuelve el año |
+| `month()` | Devuelve el mes |
+| `mday()` | Devuelve el día del mes |
+| `yday()` | Devuelve el día del año |
+| `wday()` | Devuelve el día de la semana |
+| `hour()` | Devuelve la hora |
+| `minute()` | Devuelve los minutos |
+| `second()` | Devuelve los segundos |
+
+```{r}
+datetime <- ymd_hms("2016-07-08 12:34:56")
+
+year(datetime)
+month(datetime)
+mday(datetime)
+
+yday(datetime)
+wday(datetime)
+```
+
+
+```{r}
+month(datetime, label = TRUE)
+wday(datetime, label = TRUE, abbr = FALSE)
+```
+
+Las funciones anteriores se pueden usar también para actualizar los componentes individuales:
+
+```{r}
+(datetime <- ymd_hms("2016-07-08 12:34:56"))
+
+year(datetime) <- 2020
+datetime
+month(datetime) <- 01
+datetime
+hour(datetime) <- hour(datetime) + 1
+datetime
+```
+
+O existe también la función `update()`, que actualiza varios componentes a la vez:
+
+```{r}
+update(datetime, year = 2020, month = 2, mday = 2, hour = 2)
+```
+
+```{r}
+ymd("2015-02-01") %>% 
+  update(mday = 30)
+ymd("2015-02-01") %>% 
+  update(hour = 400)
+```
+
+### Redondeo
+
+| Función | Tarea |
+|---------|-------|
+| `floor_date()` | Redondea la fecha al componente indicado inferior |
+| `round_date()` | Redondea la fecha al componente indicado | 
+| `ceiling_date()` |  Redondea la fecha al componente indicado superior |
+
+### Lapsos
+
+En R, cuando se restan dos fechas se obtiene un objeto difftime:
+
+```{r}
+age <- today() - ymd(19850919)
+age
+```
+
+En `lubridate` hay tres clases de lapsos: *duraciones*, *periodos* e *intervalos*:
+
+### Duraciones
+
+```{r}
+as.duration(age)
+```
+
+Constructores de duraciones:
+
+```{r}
+dseconds(15)
+dminutes(10)
+dhours(c(12, 24))
+ddays(0:5)
+dweeks(3)
+dyears(1)
+```
+
+```{r}
+2 * dyears(1)
+dyears(1) + dweeks(12) + dhours(15)
+```
+
+```{r}
+tomorrow <- today() + ddays(1)
+last_year <- today() - dyears(1)
+```
+
+```{r}
+one_pm <- ymd_hms("2016-03-12 13:00:00", tz = "America/New_York")
+
+one_pm
+one_pm + ddays(1)
+```
+
+
+### Periodos
+
+```{r}
+one_pm
+one_pm + days(1)
+```
+
+Constructores de periodos:
+
+```{r}
+seconds(15)
+minutes(10)
+hours(c(12, 24))
+days(7)
+months(1:6)
+weeks(3)
+years(1)
+```
+
+```{r}
+10 * (months(6) + days(1))
+days(50) + hours(25) + minutes(2)
+```
+
+```{r}
+# Año bisiesto
+ymd("2016-01-01") + dyears(1)
+ymd("2016-01-01") + years(1)
+
+# Horario de verano
+one_pm + ddays(1)
+one_pm + days(1)
+```
+
+### Intervalos
+
+```{r}
+years(1) / days(1)
+```
+
+
+```{r}
+next_year <- today() + years(1)
+(today() %--% next_year) / ddays(1)
+```
+
+```{r}
+(today() %--% next_year) %/% days(1)
+```
