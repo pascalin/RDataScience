@@ -1,19 +1,20 @@
 ---
 title: "Clasificación y Machine Learning"
 author: "David Suárez"
-date: "May 12, 2018"
+date: "May 25, 2018"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+set.seed(1200)
 ```
 
-## Métodos para clasificar ##
+## Panorama de métodos para clasificar o predecir ##
 
 | Modelo | Tarea | Metodo(s) |
 |-------|------|
-| **Algoritmos de aprendizaje supervisado** |
+| **Algoritmos de aprendizaje supervisado**: |
 | Nearest Neighbor | Clasificación |
 | naive Bayes | Clasificación |
 | Decision Trees | Clasificación |
@@ -23,7 +24,142 @@ knitr::opts_chunk$set(echo = TRUE)
 | Model Trees | Predicción númerica |
 | Neural Networks | Uso dual |
 | Support Vector Machines | Uso dual |
-| **Algoritmos de aprendizaje no supevisado** |
+| **Algoritmos de aprendizaje no supevisado**: |
 | Association Rules | Detección de patrones |
 | k-means Clustering | Clustering |
 
+```{r}
+library(tidyverse)
+library(ggplot2)
+```
+
+## Clasificación por kNN (k-Neareast Neighbor(s))
+
+kNN es un algoritmo de clasificación perezoso, que se basa en la creación de un espacio multidimensional (una dimensión por cada una de las variables o predictores) a partir del cual predice o clasifica la categoría a la que pertenece una observación, de acuerdo a la categoría que tenga la mayoría de los *k* vecinos más cercanos (de acuerdo a un cierto cálculo de distancia).
+
+En el siguiente ejemplo se emplea esta técnica para clasificar como benignos o malignos un conjunto de observaciones tomados de biopsias de tumores.
+
+```{r}
+#Usaremos el paquete `class`
+library(class)
+
+tumores <- read.csv("../data/wisc_bc_data.csv")[c(-1)]
+levels(tumores$diagnosis) <- c("Benign", "Malign")
+str(tumores)
+summary(tumores)
+
+#Creamos una función que transforma nuestros datos en la escala de 0 a 1. Esto se hace debido a que las escalas de cada una de las variables son distintas, y esto puede afectar el cálculo de las distancias.
+normalizar <- function(x) {
+  (x-min(x))/(max(x)-min(x))
+}
+
+#Usamos lapply para normalizar todas las columnas, excepto 'diagnosis'
+tumores_norm <- cbind(as.data.frame(lapply(tumores[2:31], scale)), diagnosis=tumores$diagnosis)
+summary(tumores_norm)
+
+#Aleatorizamos las muestras para generar el conjunto de entrenamiento y el de prueba.
+orden <- order(runif(nrow(tumores_norm)))
+tumores <- tumores[orden,]
+tumores_norm <- tumores_norm[orden,]
+
+#Generamos conjuntos de entrenamiento, prueba y las etiquetas para el conjunto de entrenamiento
+tumores_norm_train <- tumores_norm[1:426, ]
+tumores_norm_test <- tumores_norm[427:569, ]
+tumores_norm_train_labels <- tumores$diagnosis[1:426]
+
+#En este caso no se genera ningún modelo, más allá del espacio multidimensional, por eso se le denomina perezoso
+tumores_pred <- knn(train=tumores_norm_train[, 1:30],
+                    test=tumores_norm_test[, 1:30],
+                    cl=tumores_norm_train_labels, k=4.5)
+
+#Evaluamos la efectividad de nuestra clasificación
+library(gmodels)
+table(tumores$diagnosis[427:569] == tumores_pred)
+CrossTable(x=tumores$diagnosis[427:569], y=tumores_pred, dnn = c('predicted', 'actual'))
+```
+
+Aunque el resultado es bastante aceptable, con sólo 4 falsos negativos, en el terreno real, esos cuatro casos serían muy graves, por lo que este procedimiento, por si sólo, no sería lo suficientemente confiable.
+
+## Clasificación mediante naive Bayes
+
+```{r}
+library(e1071)
+
+ggplot() +
+  geom_boxplot(data=stack(subset(tumores_norm, diagnosis=='Benign')),
+               mapping=aes(x=ind, y=values), color='green') +
+  geom_boxplot(data=stack(subset(tumores_norm, diagnosis=='Malign')),
+               mapping=aes(x=ind, y=values), color='red') +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+#boxplot(tumores_norm[tumores$diagnosis=='Benign',], col = "green")
+#boxplot(tumores_norm[tumores$diagnosis=='Malign',], col = "red", add=T)
+
+malignos_ind <- tumores$diagnosis == 'Malign'
+benignos_ind <- tumores$diagnosis == 'Benign'
+
+cols <- colnames(tumores)[c(TRUE, sapply(colnames(tumores)[c(-1)], function(v) quantile(tumores[malignos_ind, v])[2]>quantile(tumores[benignos_ind, v])[4]))]
+
+tumores_nbayes <- tumores[, cols]
+summary(tumores_nbayes)
+
+tumores_nbayes_train <- tumores_nbayes[1:426, ]
+tumores_nbayes_test <- tumores_nbayes[427:569, ]
+
+#Convertimos nuestras variables a indicadores de presencia y ausencia
+umbrales <- t(apply(tumores_nbayes_train[c(-1)], MARGIN = 2, function(v) quantile(v[benignos_ind[1:426]])[3]))
+
+tumores_nbayes_train <- t(apply(tumores_nbayes_train[c(-1)], MARGIN = 1, function(row) row > umbrales))
+tumores_nbayes_test <- t(apply(tumores_nbayes_test[c(-1)], MARGIN = 1, function(row) row > umbrales))
+
+tumores_classifier <- naiveBayes(tumores_nbayes_train, tumores$diagnosis[1:426])
+tumores_classifier
+
+tumores_pred <- predict(tumores_classifier, tumores_nbayes_test)
+
+CrossTable(tumores_pred, tumores$diagnosis[427:569],
+           prop.chisq = FALSE, prop.t = FALSE, prop.r = FALSE,
+           dnn = c('predicted', 'actual'))
+```
+
+## Clasificación mediante árboles de decisión y aprendizaje por reglas
+
+Otras dos técnicas de clasificación son los árboles de decisión y el aprendizaje por reglas. En `R` el procedimiento es muy parecido a lo que hicimos anteriormente.
+
+```{r}
+library(C50)
+
+tumores_train <- tumores[1:426,]
+tumores_test <- tumores[427:569,]
+
+modelo_tumores_reglas <- C5.0(tumores_train[-1], tumores_train$diagnosis)
+
+modelo_tumores_reglas
+
+summary(modelo_tumores_reglas)
+
+tumores_pred <- predict(modelo_tumores_reglas, tumores_test[-1])
+
+CrossTable(tumores_test$diagnosis, tumores_pred,
+           prop.chisq = FALSE, prop.c = FALSE, prop.r = FALSE,
+           dnn = c('actual diagnosis', 'predicted diagnosis'))
+
+costos_error <- matrix(c(1, 1, 10, 1), nrow = 2, dimnames = list(c('Benign', 'Malign'),c('Benign', 'Malign')))
+costos_error
+
+modelo_tumores_reglas_pond <- C5.0(tumores_train[-1], tumores_train$diagnosis,
+                                   costs=costos_error)
+
+modelo_tumores_reglas_pond
+
+summary(modelo_tumores_reglas_pond)
+
+tumores_pred_pond <- predict(modelo_tumores_reglas_pond, tumores_test[-1])
+
+CrossTable(tumores_test$diagnosis, tumores_pred_pond,
+           prop.chisq = FALSE, prop.c = FALSE, prop.r = FALSE,
+           dnn = c('actual diagnosis', 'predicted diagnosis'))
+
+tumores_reglasc5 <- C5.0(diagnosis ~ ., data = tumores_train, rules = TRUE)
+summary(tumores_reglasc5)
+```
