@@ -244,6 +244,8 @@ Para ejemplificar el uso de R para analizar texto obtenido de Internet, usaremos
 
 library(twitteR)
 
+options(httr_oauth_cache=FALSE) #Desabilita la pregunta sobre si almacenar los datos de OAuth en un caché
+
 setup_twitter_oauth(
       'consumer_key' = 'xxx',
       'consumer_secret' = 'xxx',
@@ -327,7 +329,7 @@ library(tm)
 # Vamos a crear un vector con ocho cadenas de texto,
 # correspondientes a cada una de las emociones detectadas por el algoritmo NRC.
 
-palabras = c(
+palabras <- c(
 paste(tweets_emo$text[tweets_emo$anger > 0], collapse=" "),
 paste(tweets_emo$text[tweets_emo$anticipation > 0], collapse=" "),
 paste(tweets_emo$text[tweets_emo$disgust > 0], collapse=" "),
@@ -340,17 +342,17 @@ paste(tweets_emo$text[tweets_emo$trust > 0], collapse=" ")
 
 # Quitamos palabras de parada o 'stop-words' que harían ruido en
 # nuestro análisis porque son muy abundantes, pero no conllevan algún significado
-palabras = removeWords(todo, c(stopwords("spanish")))
+palabras <- removeWords(palabras, c(stopwords("spanish")))
 
 # Creamos el corpus
-corpus = Corpus(VectorSource(todo))
+corpus <- Corpus(VectorSource(palabras))
 
 # Creamos la matriz de términos o 'sparse matrix'
-tdm = TermDocumentMatrix(corpus)
+tdm <- TermDocumentMatrix(corpus)
 
 # La transformamos en matriz y agregamos los nombres de las columnas
-tdm = as.matrix(tdm)
-colnames(tdm) = c('anger', 'anticipation', 'disgust', 'fear', 'joy', 'sadness', 'surprise', 'trust')
+tdm <- as.matrix(tdm)
+colnames(tdm) <- c('anger', 'anticipation', 'disgust', 'fear', 'joy', 'sadness', 'surprise', 'trust')
 
 # Graficamos una nube de palabras comparativa
 layout(matrix(c(1, 2), nrow=2), heights=c(1, 4))
@@ -358,9 +360,8 @@ par(mar=rep(0, 4))
 plot.new()
 text(x=0.5, y=0.5, 'Nube de palabras comparativa de las emociones')
 comparison.cloud(tdm, random.order=FALSE,
-colors = c("#00B2FF", "red", "#FF0099", "#6600CC", "green", "orange", "blue", "brown"),
-title.size=1.5, max.words=250)
- 
+	colors = c("#00B2FF", "red", "#FF0099", "#6600CC", "green", "orange", "blue", "brown"),
+		title.size=1.5, max.words=250)
 ```
 
 ### Visualizando otros métodos de análisis de sentimientos de forma interactiva
