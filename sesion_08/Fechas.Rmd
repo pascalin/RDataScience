@@ -49,7 +49,7 @@ hour <- 8
 minute <- 2
 
 make_date(year, month, day)
-made_datetime(year, month, day, hour, minute))
+make_datetime(year, month, day, hour, minute)
 ```
 
 ### Coerción

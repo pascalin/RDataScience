@@ -245,10 +245,10 @@ Para ejemplificar el uso de R para analizar texto obtenido de Internet, usaremos
 library(twitteR)
 
 setup_twitter_oauth(
-      'consumer_key' = '5g8P4TKhbJ7NHKYcCukkl1h7h',
-      'consumer_secret' = '2HOASNshyHP0JnWocQgjKYkXf6pvAyQfGYv9F6pTU7jxXrzTD5',
-      'access_token' = '9260282-OjVcfd74kycLmCKa9WX9rvwTzDhkLzBLXc0DOtiwqg',
-      'access_secret' = 'YZtsKzffestyvIxuuJYPTMLrSEYW29rTrEiZ0J6j0Oemp'
+      'consumer_key' = 'xxx',
+      'consumer_secret' = 'xxx',
+      'access_token' = 'xxx',
+      'access_secret' = 'xxx'
 )
 
 tweets <- searchTwitter("Anaya OR Meade OR AMLO OR Bronco OR Zavala", lang="es", n=1000, retryOnRateLimit = 100, since = "2018-05-01")
@@ -314,48 +314,49 @@ Además de los sentimientos, el método NRC permite examinar 8 emociones vincula
 ```{r}
 emotions <- get_nrc_sentiment(tweet_df$text, lang="spanish")
 
-tweet_emo <- cbind(tweet_df, emotions, vote=tweet_sent$vote)
+tweets_emo <- cbind(tweet_df, emotions, vote=tweet_sent$vote)
 ```
 
-### Examinando los terminos que arroja la búsqueda
+### Examinando los términos que arroja nuestra búsqueda
+
+Para este ejemplo utilizaremos la librería `tm`:
 
 ```{r}
 library(tm)
 
-todo = c(
-paste(tweets_emo$Text[tweets_emo$anger > 0], collapse=" "),
-paste(tweets_emo$Text[tweets_emo$anticipation > 0], collapse=" "),
-paste(tweets_emo$Text[tweets_emo$disgust > 0], collapse=" "),
-paste(tweets_emo$Text[tweets_emo$fear > 0], collapse=" "),
-paste(tweets_emo$Text[tweets_emo$joy > 0], collapse=" "),
-paste(tweets_emo$Text[tweets_emo$sadness > 0], collapse=" "),
-paste(tweets_emo$Text[tweets_emo$surprise > 0], collapse=" "),
-paste(tweets_emo$Text[tweets_emo$trust > 0], collapse=" ")
+# Vamos a crear un vector con ocho cadenas de texto,
+# correspondientes a cada una de las emociones detectadas por el algoritmo NRC.
+
+palabras = c(
+paste(tweets_emo$text[tweets_emo$anger > 0], collapse=" "),
+paste(tweets_emo$text[tweets_emo$anticipation > 0], collapse=" "),
+paste(tweets_emo$text[tweets_emo$disgust > 0], collapse=" "),
+paste(tweets_emo$text[tweets_emo$fear > 0], collapse=" "),
+paste(tweets_emo$text[tweets_emo$joy > 0], collapse=" "),
+paste(tweets_emo$text[tweets_emo$sadness > 0], collapse=" "),
+paste(tweets_emo$text[tweets_emo$surprise > 0], collapse=" "),
+paste(tweets_emo$text[tweets_emo$trust > 0], collapse=" ")
 )
 
-# limpiar el texto
-#all = clean.text(all)
-# remove stop-words
-# adding extra domain specific stop words
-todo = removeWords(todo, c(stopwords("spanish")))
-#
-# create corpus
+# Quitamos palabras de parada o 'stop-words' que harían ruido en
+# nuestro análisis porque son muy abundantes, pero no conllevan algún significado
+palabras = removeWords(todo, c(stopwords("spanish")))
+
+# Creamos el corpus
 corpus = Corpus(VectorSource(todo))
-#
-# create term-document matrix
+
+# Creamos la matriz de términos o 'sparse matrix'
 tdm = TermDocumentMatrix(corpus)
-#
-# convert as matrix
+
+# La transformamos en matriz y agregamos los nombres de las columnas
 tdm = as.matrix(tdm)
-#
-# add column names
 colnames(tdm) = c('anger', 'anticipation', 'disgust', 'fear', 'joy', 'sadness', 'surprise', 'trust')
-#
-# Plot comparison wordcloud
+
+# Graficamos una nube de palabras comparativa
 layout(matrix(c(1, 2), nrow=2), heights=c(1, 4))
 par(mar=rep(0, 4))
 plot.new()
-text(x=0.5, y=0.5, 'Emotion Comparison Word Cloud')
+text(x=0.5, y=0.5, 'Nube de palabras comparativa de las emociones')
 comparison.cloud(tdm, random.order=FALSE,
 colors = c("#00B2FF", "red", "#FF0099", "#6600CC", "green", "orange", "blue", "brown"),
 title.size=1.5, max.words=250)
@@ -378,7 +379,7 @@ analiza_voto <- function(tweet) {
   candidates <- c('amlo', 'anaya', 'meade', 'bronco', 'zavala')
   tokens <- get_tokens(tweet)
   vote <- tryCatch(
-    switch(intersect(get_tokens(tweet_df$text[round(runif(1)*1000)]), candidates),
+    switch(intersect(tweet, candidates),
            amlo='AMLO',
            meade='Meade',
            anaya='Anaya',
@@ -396,10 +397,9 @@ methods_sent <- c("syuzhet", "bing", "afinn", "nrc")#, "stanford")
 cl <- makeCluster(detectCores()-1)
 clusterExport(cl = cl, c("get_sentiment", "get_sent_values", "get_nrc_sentiment", "get_nrc_values", "parLapply"))
 
-tweet_methods <- tweet_df %>% mutate(syuzhet=analiza_sent(text, "syuzhet"), bing=analiza_sent(text, "bing"), afinn=analiza_sent(text, "afinn"), nrc=analiza_sent(text, "nrc"))#, stanford=analiza_sent(text, "stanford"))
+tweet_methods <- tweet_df %>% mutate(syuzhet=analiza_sent(text, "syuzhet", lang="spanish"), bing=analiza_sent(text, "bing", lang="spanish"), afinn=analiza_sent(text, "afinn", lang="spanish"), nrc=analiza_sent(text, "nrc", lang="spanish"))#, stanford=analiza_sent(text, "stanford"))
 
 stopCluster(cl)
 
 tweet_methods %>% mutate(created=with_tz(created, tzone="America/Mexico_City")) %>% ggvis(x=~created, y=input_select(methods_sent, map=as.name), stroke:=input_select(colors())) %>% layer_lines()
 ```
-
